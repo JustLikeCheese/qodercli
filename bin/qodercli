@@ -7,12 +7,17 @@ const { spawn } = require('child_process');
 const BINARY_NAME = 'qodercli';
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
 const BIN_DIR = path.join(PACKAGE_ROOT, 'bin');
-const binPath = path.join(BIN_DIR, BINARY_NAME + (process.platform === 'win32' ? '.exe' : ''));
+const binPath = path.join(
+  BIN_DIR,
+  BINARY_NAME + (process.platform === 'win32' ? '.exe' : ''),
+);
 
 function showInstallationError() {
-  console.error('❌ qodercli binary not found');
-  console.error('This usually means the installation process failed or was incomplete.');
-  console.error('📋 System Information for debugging:');
+  console.error('qodercli binary not found');
+  console.error(
+    'This usually means the installation process failed or was incomplete.',
+  );
+  console.error('System Information for debugging:');
   console.error(`   Platform: ${process.platform} (${process.arch})`);
   console.error(`   Node.js: ${process.version}`);
   console.error(`   npm: ${process.env.npm_version || 'unknown'}`);
@@ -29,7 +34,7 @@ if (!fs.existsSync(binPath)) {
 // execute the actual binary file
 const child = spawn(binPath, process.argv.slice(2), {
   stdio: 'inherit',
-  windowsHide: false
+  windowsHide: false,
 });
 
 child.on('close', (code) => {
@@ -40,4 +45,3 @@ child.on('error', (error) => {
   console.error('execution failed:', error.message);
   process.exit(1);
 });
-
