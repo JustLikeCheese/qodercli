@@ -1,6 +1,6 @@
 {
   "name": "@qoder-ai/qodercli",
-  "version": "0.2.2-beta.2",
+  "version": "0.2.2-beta.3",
   "description": "QoderCLI - AI-powered coding assistant for your terminal",
   "license": "Apache-2.0",
   "type": "module",
