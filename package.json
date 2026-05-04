@@ -1,46 +1,99 @@
 {
   "name": "@qoder-ai/qodercli",
-  "version": "0.2.2-beta.16",
-  "description": "Qoder AI CLI - AI-powered coding assistant",
-  "author": "Qoder AI",
-  "license": "Apache-2.0",
-  "type": "module",
-  "bin": {
-    "qodercli": "bundle/qodercli.js"
+  "version": "0.2.3",
+  "description": "qodercli - npm installer",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
   },
+  "bin": {
+    "qodercli": "./bin/qodercli"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js"
+  },
+  "keywords": [
+    "qoder",
+    "ai",
+    "cli"
+  ],
+  "author": "Qoder AI",
+  "license": "SEE LICENSE IN README.md",
+  "homepage": "https://qoder.com",
   "files": [
-    "bundle/",
+    "scripts/",
+    "bin/",
     "README.md",
     "LICENSE"
   ],
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=14"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10",
+    "tar": "^4.4.19"
   },
   "os": [
     "darwin",
     "linux",
     "win32"
   ],
-  "keywords": [
-    "qoder",
-    "ai",
-    "cli",
-    "coding",
-    "assistant",
-    "gemini"
+  "cpu": [
+    "x64",
+    "arm64"
   ],
-  "homepage": "https://github.com/nicepkg/qodercli",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/nicepkg/qodercli.git"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "optionalDependencies": {
-    "keytar": "^7.9.0"
-  },
-  "scripts": {
-    "postinstall": "node -e \"try{require('child_process').execSync('rg --version',{stdio:'ignore'})}catch{console.log('\\n  ripgrep (rg) not found. Install for best search: https://github.com/BurntSushi/ripgrep#installation\\n')}\""
+  "preferGlobal": true,
+  "binaries": {
+    "version": "0.2.3",
+    "files": [
+      {
+        "os": "darwin",
+        "arch": "arm64",
+        "url": "https://qoder-ide.oss-ap-southeast-1.aliyuncs.com/qodercli/releases/0.2.3/qodercli-darwin-arm64.tar.gz",
+        "sha256": "d4ffc660fae4fa1bce52a8f90b3bdf862ed7e4c78d0be3d2c7f1a10652fee0d7"
+      },
+      {
+        "os": "darwin",
+        "arch": "amd64",
+        "url": "https://qoder-ide.oss-ap-southeast-1.aliyuncs.com/qodercli/releases/0.2.3/qodercli-darwin-x64.tar.gz",
+        "sha256": "b125f3a7d527ba2c38e5149aec497962c91bb57e9bb82a44c0badd07991aac0b"
+      },
+      {
+        "os": "linux",
+        "arch": "arm64-musl",
+        "url": "https://qoder-ide.oss-ap-southeast-1.aliyuncs.com/qodercli/releases/0.2.3/qodercli-linux-arm64-musl.tar.gz",
+        "sha256": "99663495215b6ace582460c33973f9aae0c42d077876c14d74636c36268c9094"
+      },
+      {
+        "os": "linux",
+        "arch": "arm64",
+        "url": "https://qoder-ide.oss-ap-southeast-1.aliyuncs.com/qodercli/releases/0.2.3/qodercli-linux-arm64.tar.gz",
+        "sha256": "1b3bd28798da575ce67f27732efee7d9b22a1e046d75b94f307b2bb8cc701b7d"
+      },
+      {
+        "os": "linux",
+        "arch": "amd64-baseline",
+        "url": "https://qoder-ide.oss-ap-southeast-1.aliyuncs.com/qodercli/releases/0.2.3/qodercli-linux-x64-baseline.tar.gz",
+        "sha256": "f9caec58ba854017a41ffa9b245b2de52ddbb123971fbe0ffdecf5d8ec22858c"
+      },
+      {
+        "os": "linux",
+        "arch": "amd64-musl",
+        "url": "https://qoder-ide.oss-ap-southeast-1.aliyuncs.com/qodercli/releases/0.2.3/qodercli-linux-x64-musl.tar.gz",
+        "sha256": "f5e5c358297a3d571201010d17490b990a1614653c72d3190b0cd7e9d3ba22cb"
+      },
+      {
+        "os": "linux",
+        "arch": "amd64",
+        "url": "https://qoder-ide.oss-ap-southeast-1.aliyuncs.com/qodercli/releases/0.2.3/qodercli-linux-x64.tar.gz",
+        "sha256": "a81379dcd18fa7f46e643ebde5fbcd3b0c3fedc3017120998f654dbb0a916900"
+      },
+      {
+        "os": "windows",
+        "arch": "amd64",
+        "url": "https://qoder-ide.oss-ap-southeast-1.aliyuncs.com/qodercli/releases/0.2.3/qodercli-windows-x64.zip",
+        "sha256": "cde970e0485332dd78f79680ead02ec4a885ba3d067da69a3e4b9e534114ac39"
+      }
+    ]
   }
 }
