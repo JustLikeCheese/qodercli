@@ -1,6 +1,6 @@
 {
   "name": "@qoder-ai/qodercli",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "description": "qodercli - npm installer",
   "private": false,
   "publishConfig": {
@@ -44,37 +44,37 @@
   ],
   "preferGlobal": true,
   "binaries": {
-    "version": "0.1.19",
+    "version": "0.1.20",
     "files": [
       {
         "os": "linux",
         "arch": "amd64",
-        "url": "https://download.qoder.com/qodercli/releases/0.1.19/qodercli_0.1.19_linux_amd64.tar.gz",
-        "sha256": "0320d0ecb861fbf2e5d48934259526a32b50e93df44aaeab811546e95dbdc158"
+        "url": "https://download.qoder.com/qodercli/releases/0.1.20/qodercli_0.1.20_linux_amd64.tar.gz",
+        "sha256": "0dda54e09cbc13dd54b7ce83046265492a9251b5d4e7ec158bac42d5a852c41c"
       },
       {
         "os": "linux",
         "arch": "arm64",
-        "url": "https://download.qoder.com/qodercli/releases/0.1.19/qodercli_0.1.19_linux_arm64.tar.gz",
-        "sha256": "d92fa0f7769743d4f5a9b8e27acf801c176dd96d0ad2442491f474a1611bc1ba"
+        "url": "https://download.qoder.com/qodercli/releases/0.1.20/qodercli_0.1.20_linux_arm64.tar.gz",
+        "sha256": "239b32bd7bfc6367c052d8073790cad5fb4440529dcde8d26e2c1bb3893bcf36"
       },
       {
         "os": "darwin",
         "arch": "amd64",
-        "url": "https://download.qoder.com/qodercli/releases/0.1.19/qodercli_0.1.19_darwin_amd64.zip",
-        "sha256": "06740cbe48687e29e6e76563d0de545b05e7561400e1729d908efa524b8b31bd"
+        "url": "https://download.qoder.com/qodercli/releases/0.1.20/qodercli_0.1.20_darwin_amd64.zip",
+        "sha256": "881289158bd7568a119f91a1452d46976093d3ded95a243c1347a054f18de3a0"
       },
       {
         "os": "darwin",
         "arch": "arm64",
-        "url": "https://download.qoder.com/qodercli/releases/0.1.19/qodercli_0.1.19_darwin_arm64.zip",
-        "sha256": "c25dccae5fd99559174af6bd8a862d13f7fb5d4689d3c38ac850ea25da545340"
+        "url": "https://download.qoder.com/qodercli/releases/0.1.20/qodercli_0.1.20_darwin_arm64.zip",
+        "sha256": "66fceb4697d95215671795f921e1be30524de610e4c090eeed7f4bba7de4f045"
       },
       {
         "os": "windows",
         "arch": "amd64",
-        "url": "https://download.qoder.com/qodercli/releases/0.1.19/qodercli_0.1.19_windows_amd64.zip",
-        "sha256": "740f9cedbef50ba40e9dc2e151adc5146af041c7157384c72d452bab91bafdc7"
+        "url": "https://download.qoder.com/qodercli/releases/0.1.20/qodercli_0.1.20_windows_amd64.zip",
+        "sha256": "271be011ec09919fceb3e1e58955aa518a82655b4787910bc6a260b0b4017ddf"
       }
     ]
   }
