@@ -107,7 +107,19 @@ class QoderInstaller {
         throw new Error(`Binary file not found after extraction in ${extractDir}`);
       }
       
-      fs.renameSync(extractedBinary[0], this.binPath);
+      // Try rename first (efficient), fallback to copy+delete if cross-device
+      try {
+        fs.renameSync(extractedBinary[0], this.binPath);
+      } catch (error) {
+        if (error.code === 'EXDEV') {
+          // Cross-device link not permitted, use copy+delete fallback
+          console.log('Cross-device link detected, using copy+delete method...');
+          fs.copyFileSync(extractedBinary[0], this.binPath);
+          fs.unlinkSync(extractedBinary[0]);
+        } else {
+          throw error;
+        }
+      }
       
       // Set executable permission
       if (process.platform !== 'win32') {
@@ -135,37 +147,88 @@ class QoderInstaller {
 
   async extractArchive(archivePath, filename, extractDir) {
     if (filename.endsWith('.zip')) {
-      // Extract ZIP file
-      if (process.platform === 'win32') {
-        // Windows: Use PowerShell
-        try {
-          execSync(`powershell -command "Expand-Archive -Path '${archivePath}' -DestinationPath '${extractDir}' -Force"`, {
-            stdio: 'pipe'
-          });
-        } catch (error) {
-          throw new Error(`ZIP extraction failed: ${error.message}. Please ensure PowerShell is available.`);
-        }
-      } else {
-        // Unix: Use unzip command
-        try {
-          execSync(`unzip -o "${archivePath}" -d "${extractDir}"`, {
-            stdio: 'pipe'
-          });
-        } catch (error) {
-          throw new Error('ZIP extraction failed. Please ensure unzip command is installed.');
+      // Extract ZIP file using Node.js packages first
+      let extracted = false;
+      
+      // Method 1: Use adm-zip package (preferred)
+      try {
+        const AdmZip = require('adm-zip');
+        const zip = new AdmZip(archivePath);
+        zip.extractAllTo(extractDir, true);
+        extracted = true;
+        console.log('ZIP extracted using Node.js adm-zip package');
+      } catch (error) {
+        console.log('adm-zip extraction failed, trying system commands...', error.message);
+      }
+      
+      // Method 2: System command fallbacks
+      if (!extracted) {
+        if (process.platform === 'win32') {
+          // Windows: Try PowerShell then 7-Zip
+          try {
+            execSync(`powershell -command "Expand-Archive -Path '${archivePath}' -DestinationPath '${extractDir}' -Force"`, {
+              stdio: 'pipe'
+            });
+            extracted = true;
+          } catch (error) {
+            try {
+              execSync(`7z x "${archivePath}" -o"${extractDir}" -y`, {
+                stdio: 'pipe'
+              });
+              extracted = true;
+            } catch (error2) {
+              // Will fail below
+            }
+          }
+        } else {
+          // Unix: Use unzip command
+          try {
+            execSync(`unzip -o "${archivePath}" -d "${extractDir}"`, {
+              stdio: 'pipe'
+            });
+            extracted = true;
+          } catch (error) {
+            // Will fail below
+          }
         }
       }
+      
+      if (!extracted) {
+        const platform = process.platform === 'win32' ? 'Windows' : 'Unix';
+        throw new Error(`ZIP extraction failed on ${platform}. Please ensure extraction tools are available.`);
+      }
     } else {
-      // Extract tar.gz file
+      // Extract tar.gz file using Node.js tar package first
+      let extracted = false;
+      
+      // Method 1: Use tar package (preferred)
       try {
-        execSync(`tar -xzf "${archivePath}" -C "${extractDir}"`, {
-          stdio: 'pipe'
+        const tar = require('tar');
+        // tar v4.x uses different API than v6.x
+        await tar.extract({
+          file: archivePath,
+          cwd: extractDir
         });
+        extracted = true;
+        console.log('tar.gz extracted using Node.js tar package');
       } catch (error) {
-        throw new Error('tar.gz extraction failed. Please ensure tar command is installed.');
+        console.log('Node.js tar extraction failed, trying system tar command...', error.message);
+      }
+      
+      // Method 2: System tar command fallback
+      if (!extracted) {
+        try {
+          execSync(`tar -xzf "${archivePath}" -C "${extractDir}"`, {
+            stdio: 'pipe'
+          });
+          extracted = true;
+        } catch (error) {
+          throw new Error('tar.gz extraction failed. Please ensure tar command is installed.');
+        }
       }
     }
   }
+
 
   calculateSha256(filePath) {
     const fileBuffer = fs.readFileSync(filePath);
@@ -334,8 +397,16 @@ class QoderInstaller {
 
 // Main program
 if (require.main === module) {
-  const installer = new QoderInstaller();
-  installer.install();
+  try {
+    const installer = new QoderInstaller();
+    installer.install();
+  } catch (error) {
+    console.error('❌ Failed to initialize installer:', error.message);
+    console.error('This might be due to Node.js version compatibility issues.');
+    console.error(`Current Node.js version: ${process.version}`);
+    console.error('Required Node.js version: >=14');
+    process.exit(1);
+  }
 }
 
 module.exports = QoderInstaller;

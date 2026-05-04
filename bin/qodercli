@@ -11,8 +11,13 @@ const binPath = path.join(BIN_DIR, BINARY_NAME + (process.platform === 'win32' ?
 
 function showInstallationError() {
   console.error('❌ qodercli binary not found');
-  console.error('please try to reinstall:');
-  console.error('  npm install --force');
+  console.error('This usually means the installation process failed or was incomplete.');
+  console.error('📋 System Information for debugging:');
+  console.error(`   Platform: ${process.platform} (${process.arch})`);
+  console.error(`   Node.js: ${process.version}`);
+  console.error(`   npm: ${process.env.npm_version || 'unknown'}`);
+  console.error(`   Binary path: ${binPath}`);
+  console.error('');
 }
 
 // check if the binary file exists
