@@ -1,0 +1,17 @@
+{
+  "name": "@qoder-ai/qodercli",
+  "version": "0.2.2-beta.6",
+  "description": "QoderCLI - AI-powered coding assistant",
+  "private": false,
+  "publishConfig": { "access": "public" },
+  "bin": { "qodercli": "./bin/run.js" },
+  "files": ["bin/", "README.md", "LICENSE"],
+  "engines": { "node": ">=14" },
+  "optionalDependencies": {
+    "@qoder-ai/qodercli-darwin-arm64": "0.2.2-beta.6"
+  },
+  "keywords": ["qoder", "ai", "cli", "coding", "assistant", "terminal"],
+  "author": "Qoder AI",
+  "license": "Apache-2.0",
+  "homepage": "https://qoder.com"
+}
