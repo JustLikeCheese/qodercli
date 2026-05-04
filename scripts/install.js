@@ -6,15 +6,30 @@ const https = require('https');
 const http = require('http');
 const { execSync } = require('child_process');
 const crypto = require('crypto');
+const os = require('os');
 
 // Configuration
 const BINARY_NAME = 'qodercli';
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
 const BIN_DIR = path.join(PACKAGE_ROOT, 'bin');
 const PACKAGE_JSON_PATH = path.join(PACKAGE_ROOT, 'package.json');
+const INSTALL_METHOD = 'npm';
 
 class QoderInstaller {
   constructor() {
+    // Mark this as an installation process
+    process.env.QODER_CLI_INSTALL = '1';
+
+    // Initialize logging variables
+    this.logFile = null;
+    this.logStream = null;
+    this.originalConsoleLog = console.log;
+    this.originalConsoleError = console.error;
+
+    // Setup logging first to capture all output including platform detection
+    this.setupLogging();
+
+    // Detect platform and architecture (will be logged if they fail)
     this.platform = this.detectPlatform();
     this.arch = this.detectArch();
     this.binPath = path.join(BIN_DIR, BINARY_NAME + (process.platform === 'win32' ? '.exe' : ''));
@@ -41,15 +56,106 @@ class QoderInstaller {
     }
   }
 
+  setupLogging() {
+    try {
+      // Create log directory: ~/.qoder/logs on all platforms
+      const logDir = path.join(os.homedir(), '.qoder', 'logs');
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+      }
+
+      // Create log file with timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').split('Z')[0];
+      this.logFile = path.join(logDir, `qodercli_install_${INSTALL_METHOD}_${timestamp}.log`);
+
+      // Create write stream
+      this.logStream = fs.createWriteStream(this.logFile, { flags: 'a' });
+
+      // Write log header
+      this.logStream.write(`Installation started at ${new Date().toISOString()}\n`);
+      this.logStream.write(`Installation method: ${INSTALL_METHOD}\n`);
+      this.logStream.write(`Platform: ${process.platform}/${process.arch}\n`);
+      this.logStream.write(`Node.js version: ${process.version}\n`);
+      this.logStream.write('================================\n\n');
+
+      // Create latest log marker
+      // Unix: symlink immediately, Windows: will copy after completion
+      const latestLogLink = path.join(logDir, 'qodercli_install.log');
+      try {
+        if (process.platform !== 'win32') {
+          // Unix: use symlink (immediate)
+          if (fs.existsSync(latestLogLink)) {
+            fs.unlinkSync(latestLogLink);
+          }
+          fs.symlinkSync(this.logFile, latestLogLink);
+        }
+        // Windows: will copy complete log in closeLogging()
+      } catch (e) {
+        // Ignore errors - not critical
+      }
+
+      // Redirect console.log and console.error to both terminal and log file
+      const self = this;
+      console.log = function(...args) {
+        const message = args.map(arg =>
+          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+        ).join(' ');
+        self.originalConsoleLog.apply(console, args);
+        if (self.logStream) {
+          self.logStream.write(message + '\n');
+        }
+      };
+
+      console.error = function(...args) {
+        const message = args.map(arg =>
+          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+        ).join(' ');
+        self.originalConsoleError.apply(console, args);
+        if (self.logStream) {
+          self.logStream.write('[ERROR] ' + message + '\n');
+        }
+      };
+
+      // Log file location saved but not printed (will show on error)
+
+    } catch (error) {
+      // If logging setup fails, continue without logging
+      this.originalConsoleError.call(console, 'Warning: Failed to setup logging:', error.message);
+      this.originalConsoleError.call(console, 'Installation will continue without logging');
+    }
+  }
+
+  closeLogging() {
+    if (this.logStream) {
+      this.logStream.end();
+      this.logStream = null;
+    }
+
+    // Update latest log marker after installation completes
+    if (this.logFile && process.platform === 'win32') {
+      try {
+        const logDir = path.dirname(this.logFile);
+        const latestLogLink = path.join(logDir, 'qodercli_install.log');
+        fs.copyFileSync(this.logFile, latestLogLink);
+      } catch (e) {
+        // Ignore errors - not critical
+      }
+    }
+
+    // Restore original console methods
+    console.log = this.originalConsoleLog;
+    console.error = this.originalConsoleError;
+  }
+
   loadPackageInfo() {
     try {
       const packageJson = fs.readFileSync(PACKAGE_JSON_PATH, 'utf8');
       const packageInfo = JSON.parse(packageJson);
-      
+
       if (!packageInfo.binaries || !packageInfo.binaries.files) {
         throw new Error('Binary information missing in package configuration');
       }
-      
+
       return packageInfo;
     } catch (error) {
       throw new Error(`Unable to read package configuration: ${error.message}`);
@@ -58,7 +164,7 @@ class QoderInstaller {
 
   findBinaryInfo() {
     const files = this.packageInfo.binaries.files;
-    const targetFile = files.find(file => 
+    const targetFile = files.find(file =>
       file.os === this.platform && file.arch === this.arch
     );
 
@@ -71,11 +177,11 @@ class QoderInstaller {
 
   async downloadBinary(url, expectedSha256) {
     console.log(`Downloading binary: ${url}`);
-    
+
     // Create temporary directory for download operations
     const os = require('os');
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qodercli-install-'));
-    
+
     // Ensure target directory exists
     if (!fs.existsSync(BIN_DIR)) {
       fs.mkdirSync(BIN_DIR, { recursive: true });
@@ -84,29 +190,29 @@ class QoderInstaller {
     // Download file to temporary directory
     const filename = path.basename(url);
     const archivePath = path.join(tempDir, filename);
-    
+
     try {
       await this.downloadFile(url, archivePath);
-      
+
       // Verify checksum
       console.log('Verifying file integrity...');
       const actualSha256 = this.calculateSha256(archivePath);
       if (actualSha256 !== expectedSha256) {
         throw new Error(`Checksum mismatch. Expected: ${expectedSha256}, Got: ${actualSha256}`);
       }
-      
+
       // Extract file to temporary directory first
       console.log('Extracting binary...');
       const extractDir = path.join(tempDir, 'extract');
       fs.mkdirSync(extractDir, { recursive: true });
       await this.extractArchive(archivePath, filename, extractDir);
-      
+
       // Move extracted binary to final destination
       const extractedBinary = this.findExtractedBinary(extractDir);
       if (extractedBinary.length === 0) {
         throw new Error(`Binary file not found after extraction in ${extractDir}`);
       }
-      
+
       // Try rename first (efficient), fallback to copy+delete if cross-device
       try {
         fs.renameSync(extractedBinary[0], this.binPath);
@@ -120,19 +226,16 @@ class QoderInstaller {
           throw error;
         }
       }
-      
+
       // Set executable permission
       if (process.platform !== 'win32') {
         fs.chmodSync(this.binPath, 0o755);
       }
-      
+
       // Create installation source marker
       const sourceFile = path.join(BIN_DIR, '.qodercli-install-resource');
       fs.writeFileSync(sourceFile, 'npm', 'utf8');
-      
-      // Verify installation
-      this.verifyInstallation();
-      
+
     } catch (error) {
       throw error;
     } finally {
@@ -149,7 +252,7 @@ class QoderInstaller {
     if (filename.endsWith('.zip')) {
       // Extract ZIP file using Node.js packages first
       let extracted = false;
-      
+
       // Method 1: Use adm-zip package (preferred)
       try {
         const AdmZip = require('adm-zip');
@@ -160,7 +263,7 @@ class QoderInstaller {
       } catch (error) {
         console.log('adm-zip extraction failed, trying system commands...', error.message);
       }
-      
+
       // Method 2: System command fallbacks
       if (!extracted) {
         if (process.platform === 'win32') {
@@ -192,7 +295,7 @@ class QoderInstaller {
           }
         }
       }
-      
+
       if (!extracted) {
         const platform = process.platform === 'win32' ? 'Windows' : 'Unix';
         throw new Error(`ZIP extraction failed on ${platform}. Please ensure extraction tools are available.`);
@@ -200,7 +303,7 @@ class QoderInstaller {
     } else {
       // Extract tar.gz file using Node.js tar package first
       let extracted = false;
-      
+
       // Method 1: Use tar package (preferred)
       try {
         const tar = require('tar');
@@ -214,7 +317,7 @@ class QoderInstaller {
       } catch (error) {
         console.log('Node.js tar extraction failed, trying system tar command...', error.message);
       }
-      
+
       // Method 2: System tar command fallback
       if (!extracted) {
         try {
@@ -240,13 +343,13 @@ class QoderInstaller {
   findExtractedBinary(searchDir) {
     const results = [];
     const expectedFilename = BINARY_NAME + (process.platform === 'win32' ? '.exe' : '');
-    
+
     try {
       const items = fs.readdirSync(searchDir, { withFileTypes: true });
-      
+
       for (const item of items) {
         const fullPath = path.join(searchDir, item.name);
-        
+
         if (item.isDirectory()) {
           // Recursively search in subdirectories
           results.push(...this.findExtractedBinary(fullPath));
@@ -257,7 +360,7 @@ class QoderInstaller {
     } catch (error) {
       console.warn(`Unable to search directory ${searchDir}:`, error.message);
     }
-    
+
     return results;
   }
 
@@ -265,17 +368,25 @@ class QoderInstaller {
     if (!fs.existsSync(this.binPath)) {
       throw new Error('Binary installation failed');
     }
+    if (this.logStream?.fd !== undefined) {
+      try {
+        fs.fsyncSync(this.logStream.fd);
+      } catch (e) {
+      }
+    }
 
     try {
-      // Try to run version command for verification
       const output = execSync(`"${this.binPath}" --version`, {
         encoding: 'utf8',
-        stdio: 'pipe'
+        stdio: 'pipe',
+        env: { ...process.env, QODER_CLI_INSTALL: '1' }
       });
+      const versionInfo = output.trim();
       console.log('Installation verified successfully');
-      console.log(`Version info: ${output.trim()}`);
+      return versionInfo;
     } catch (error) {
       console.warn('Warning: Unable to verify installation, but binary file exists');
+      return null;
     }
   }
 
@@ -284,17 +395,17 @@ class QoderInstaller {
       const file = fs.createWriteStream(filePath);
       const client = url.startsWith('https:') ? https : http;
       let cleanupDone = false;
-      
+
       const cleanup = () => {
         if (cleanupDone) return;
         cleanupDone = true;
-        
+
         try {
           file.close();
         } catch (e) {
           // Ignore errors during cleanup
         }
-        
+
         try {
           if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
@@ -303,15 +414,24 @@ class QoderInstaller {
           // Ignore errors during cleanup
         }
       };
-      
-      const request = client.get(url, (response) => {
+      const parsedUrl = new URL(url);
+      const options = {
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port,
+        path: parsedUrl.pathname + parsedUrl.search,
+        headers: {
+          'User-Agent': 'qodercli-installer/npm (https://qoder.com)'
+        }
+      };
+
+      const request = client.get(options, (response) => {
         if (response.statusCode === 302 || response.statusCode === 301) {
           // Handle redirect
           cleanup();
           return this.downloadFile(response.headers.location, filePath, timeout)
             .then(resolve).catch(reject);
         }
-        
+
         if (response.statusCode !== 200) {
           cleanup();
           reject(new Error(`HTTP ${response.statusCode}: ${response.statusMessage}`));
@@ -319,14 +439,14 @@ class QoderInstaller {
         }
 
         response.pipe(file);
-        
+
         file.on('finish', () => {
           if (!cleanupDone) {
             file.close();
             resolve();
           }
         });
-        
+
         file.on('error', (error) => {
           cleanup();
           reject(error);
@@ -342,27 +462,27 @@ class QoderInstaller {
         cleanup();
         reject(new Error(`Download timeout (${timeout}ms): ${url}`));
       });
-      
+
       // Handle process interruption signals
       const handleSignal = () => {
         request.destroy();
         cleanup();
         reject(new Error('Download interrupted by signal'));
       };
-      
+
       process.once('SIGINT', handleSignal);
       process.once('SIGTERM', handleSignal);
-      
+
       // Clean up signal handlers when promise resolves/rejects
       const originalResolve = resolve;
       const originalReject = reject;
-      
+
       resolve = (...args) => {
         process.removeListener('SIGINT', handleSignal);
         process.removeListener('SIGTERM', handleSignal);
         originalResolve(...args);
       };
-      
+
       reject = (...args) => {
         process.removeListener('SIGINT', handleSignal);
         process.removeListener('SIGTERM', handleSignal);
@@ -372,11 +492,14 @@ class QoderInstaller {
   }
 
   async install() {
+    let installSuccess = false;
+    let versionInfo = null;
+
     try {
       console.log('Installing Qoder CLI...');
       console.log(`Target platform: ${this.platform}/${this.arch}`);
       console.log(`Version: ${this.packageInfo.binaries.version}`);
-      
+
       // If already installed, reinstall
       if (fs.existsSync(this.binPath)) {
         console.log('Existing version detected, will reinstall');
@@ -384,27 +507,75 @@ class QoderInstaller {
 
       const binaryInfo = this.findBinaryInfo();
       await this.downloadBinary(binaryInfo.url, binaryInfo.sha256);
-      
-      console.log('✅ Qoder CLI installed successfully!');
-      console.log(`Run 'npx qodercli --help' to get started`);
-      
+
+      // Verify and get version info
+      versionInfo = this.verifyInstallation();
+      installSuccess = true;
+
     } catch (error) {
+      console.error('');
       console.error('❌ Installation failed:', error.message);
+      console.error('');
+      if (this.logFile) {
+        console.error(`Installation log: ${this.logFile}`);
+        console.error('');
+      }
+      console.error('For help, visit: https://forum.qoder.com/c/bug-reports');
+      console.error('');
+
+      this.closeLogging();
       process.exit(1);
+    } finally {
+      // Show final summary
+      if (installSuccess) {
+        this.showSuccessSummary(versionInfo);
+      }
+
+      // Close logging
+      this.closeLogging();
     }
+  }
+
+  showSuccessSummary(versionInfo) {
+    console.log('');
+
+    if (versionInfo) {
+      console.log(`🎉 ${versionInfo} installed successfully!`);
+    } else {
+      console.log('🎉 Qoder CLI installed successfully!');
+    }
+
+    console.log('');
+    console.log('Get started: qodercli --help');
+    console.log('Need help? Visit: https://forum.qoder.com/c/bug-reports');
+    console.log('');
   }
 }
 
 // Main program
 if (require.main === module) {
+  let installer = null;
   try {
-    const installer = new QoderInstaller();
+    installer = new QoderInstaller();
     installer.install();
   } catch (error) {
+    console.error('');
     console.error('❌ Failed to initialize installer:', error.message);
+    console.error('');
     console.error('This might be due to Node.js version compatibility issues.');
     console.error(`Current Node.js version: ${process.version}`);
     console.error('Required Node.js version: >=14');
+    console.error('');
+
+    // Show log file location if logging was initialized
+    // (now possible since setupLogging() runs first)
+    if (installer && installer.logFile) {
+      console.error(`Installation log: ${installer.logFile}`);
+      console.error('');
+    }
+
+    console.error('For help, visit: https://forum.qoder.com/c/bug-reports');
+    console.error('');
     process.exit(1);
   }
 }
