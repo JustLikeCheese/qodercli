@@ -72,14 +72,18 @@ class QoderInstaller {
   async downloadBinary(url, expectedSha256) {
     console.log(`Downloading binary: ${url}`);
     
-    // Ensure directory exists
+    // Create temporary directory for download operations
+    const os = require('os');
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qodercli-install-'));
+    
+    // Ensure target directory exists
     if (!fs.existsSync(BIN_DIR)) {
       fs.mkdirSync(BIN_DIR, { recursive: true });
     }
 
-    // Download file
+    // Download file to temporary directory
     const filename = path.basename(url);
-    const archivePath = path.join(BIN_DIR, filename);
+    const archivePath = path.join(tempDir, filename);
     
     try {
       await this.downloadFile(url, archivePath);
@@ -91,12 +95,19 @@ class QoderInstaller {
         throw new Error(`Checksum mismatch. Expected: ${expectedSha256}, Got: ${actualSha256}`);
       }
       
-      // Extract file
+      // Extract file to temporary directory first
       console.log('Extracting binary...');
-      await this.extractArchive(archivePath, filename);
+      const extractDir = path.join(tempDir, 'extract');
+      fs.mkdirSync(extractDir, { recursive: true });
+      await this.extractArchive(archivePath, filename, extractDir);
       
-      // Remove archive
-      fs.unlinkSync(archivePath);
+      // Move extracted binary to final destination
+      const extractedBinary = this.findExtractedBinary(extractDir);
+      if (extractedBinary.length === 0) {
+        throw new Error(`Binary file not found after extraction in ${extractDir}`);
+      }
+      
+      fs.renameSync(extractedBinary[0], this.binPath);
       
       // Set executable permission
       if (process.platform !== 'win32') {
@@ -111,41 +122,33 @@ class QoderInstaller {
       this.verifyInstallation();
       
     } catch (error) {
-      // Cleanup failed download
-      if (fs.existsSync(archivePath)) {
-        fs.unlinkSync(archivePath);
-      }
       throw error;
+    } finally {
+      // Always cleanup temporary directory
+      try {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      } catch (cleanupError) {
+        console.warn('Warning: Failed to cleanup temporary directory:', cleanupError.message);
+      }
     }
   }
 
-  async extractArchive(archivePath, filename) {
+  async extractArchive(archivePath, filename, extractDir) {
     if (filename.endsWith('.zip')) {
       // Extract ZIP file
       if (process.platform === 'win32') {
         // Windows: Use PowerShell
         try {
-          execSync(`powershell -command "Expand-Archive -Path '${archivePath}' -DestinationPath '${BIN_DIR}' -Force"`, {
+          execSync(`powershell -command "Expand-Archive -Path '${archivePath}' -DestinationPath '${extractDir}' -Force"`, {
             stdio: 'pipe'
           });
-          
-          // Additional verification - check if binary file exists after extraction
-          if (!fs.existsSync(this.binPath)) {
-            // Maybe the binary is in a subdirectory, let's check
-            const extractedFiles = this.findExtractedBinary(BIN_DIR);
-            if (extractedFiles.length > 0) {
-              fs.renameSync(extractedFiles[0], this.binPath);
-            } else {
-              throw new Error(`Binary file not found after extraction. Expected at: ${this.binPath}`);
-            }
-          }
         } catch (error) {
           throw new Error(`ZIP extraction failed: ${error.message}. Please ensure PowerShell is available.`);
         }
       } else {
         // Unix: Use unzip command
         try {
-          execSync(`unzip -o "${archivePath}" -d "${BIN_DIR}"`, {
+          execSync(`unzip -o "${archivePath}" -d "${extractDir}"`, {
             stdio: 'pipe'
           });
         } catch (error) {
@@ -155,7 +158,7 @@ class QoderInstaller {
     } else {
       // Extract tar.gz file
       try {
-        execSync(`tar -xzf "${archivePath}" -C "${BIN_DIR}"`, {
+        execSync(`tar -xzf "${archivePath}" -C "${extractDir}"`, {
           stdio: 'pipe'
         });
       } catch (error) {
@@ -217,19 +220,37 @@ class QoderInstaller {
     return new Promise((resolve, reject) => {
       const file = fs.createWriteStream(filePath);
       const client = url.startsWith('https:') ? https : http;
+      let cleanupDone = false;
+      
+      const cleanup = () => {
+        if (cleanupDone) return;
+        cleanupDone = true;
+        
+        try {
+          file.close();
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+        
+        try {
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+      };
       
       const request = client.get(url, (response) => {
         if (response.statusCode === 302 || response.statusCode === 301) {
           // Handle redirect
-          file.close();
-          fs.unlinkSync(filePath);
+          cleanup();
           return this.downloadFile(response.headers.location, filePath, timeout)
             .then(resolve).catch(reject);
         }
         
         if (response.statusCode !== 200) {
-          file.close();
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+          cleanup();
           reject(new Error(`HTTP ${response.statusCode}: ${response.statusMessage}`));
           return;
         }
@@ -237,26 +258,53 @@ class QoderInstaller {
         response.pipe(file);
         
         file.on('finish', () => {
-          file.close();
-          resolve();
+          if (!cleanupDone) {
+            file.close();
+            resolve();
+          }
         });
         
         file.on('error', (error) => {
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+          cleanup();
           reject(error);
         });
       }).on('error', (error) => {
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        cleanup();
         reject(error);
       });
 
       // Set timeout
       request.setTimeout(timeout, () => {
         request.destroy();
-        file.close();
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        cleanup();
         reject(new Error(`Download timeout (${timeout}ms): ${url}`));
       });
+      
+      // Handle process interruption signals
+      const handleSignal = () => {
+        request.destroy();
+        cleanup();
+        reject(new Error('Download interrupted by signal'));
+      };
+      
+      process.once('SIGINT', handleSignal);
+      process.once('SIGTERM', handleSignal);
+      
+      // Clean up signal handlers when promise resolves/rejects
+      const originalResolve = resolve;
+      const originalReject = reject;
+      
+      resolve = (...args) => {
+        process.removeListener('SIGINT', handleSignal);
+        process.removeListener('SIGTERM', handleSignal);
+        originalResolve(...args);
+      };
+      
+      reject = (...args) => {
+        process.removeListener('SIGINT', handleSignal);
+        process.removeListener('SIGTERM', handleSignal);
+        originalReject(...args);
+      };
     });
   }
 

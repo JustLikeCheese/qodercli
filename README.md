@@ -8,9 +8,9 @@ Qoder CLI is a powerful terminal-based AI assistant that understands your codeba
 
 Install Qoder CLI using your preferred method:
 
-### NPM (Recommended)
+### Curl + Bash
 ```sh
-npm install -g @qoder-ai/qodercli
+curl -fsSL https://qoder.com/install | bash
 ```
 
 ### Homebrew (macOS & Linux)
@@ -18,9 +18,9 @@ npm install -g @qoder-ai/qodercli
 brew install --cask QoderAI/qoder/qodercli
 ```
 
-### Curl + Bash
+### NPM
 ```sh
-curl -fsSL https://qoder.com/install | bash
+npm install -g @qoder-ai/qodercli
 ```
 
 ## Usage
@@ -31,7 +31,7 @@ curl -fsSL https://qoder.com/install | bash
 
 ## Reporting Bugs
 
-We welcome feedback. Use the `/bug` command to report issues directly within Qoder CLI.
+We welcome feedback. Use the `/feedback` command to report issues directly within Qoder CLI.
 
 ## Data collection, usage, and retention
 
