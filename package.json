@@ -1,0 +1,77 @@
+{
+  "name": "@qoder-ai/qodercli",
+  "version": "0.0.9-preview",
+  "description": "qodercli - npm installer",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "qodercli": "./bin/qodercli"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js"
+  },
+  "keywords": [
+    "qoder",
+    "ai",
+    "cli"
+  ],
+  "author": "Qoder AI",
+  "license": "SEE LICENSE IN README.md",
+  "homepage": "https://qoder.com",
+  "files": [
+    "scripts/",
+    "bin/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "preferGlobal": true,
+  "binaries": {
+    "version": "0.0.9-preview",
+    "files": [
+      {
+        "os": "linux",
+        "arch": "amd64",
+        "url": "qoder-ide.oss-ap-southeast-1.aliyuncs.com/qodercli/releases/0.0.9-preview/qodercli_0.0.9-preview_linux_amd64.tar.gz",
+        "sha256": "7e9e33d234c9d819290872c11daef8cbcf5df92e9525533e8ad3932a0420c9d0"
+      },
+      {
+        "os": "linux",
+        "arch": "arm64",
+        "url": "qoder-ide.oss-ap-southeast-1.aliyuncs.com/qodercli/releases/0.0.9-preview/qodercli_0.0.9-preview_linux_arm64.tar.gz",
+        "sha256": "0371b085c472269f5e565f718957e79b8fad2135c8ab16b0592276ce6863f233"
+      },
+      {
+        "os": "darwin",
+        "arch": "amd64",
+        "url": "qoder-ide.oss-ap-southeast-1.aliyuncs.com/qodercli/releases/0.0.9-preview/qodercli_0.0.9-preview_darwin_amd64.zip",
+        "sha256": "b15c7e3692a322c7f605a097aa24827f7465d4f4037e0548eae4e99abd0a1ba9"
+      },
+      {
+        "os": "darwin",
+        "arch": "arm64",
+        "url": "qoder-ide.oss-ap-southeast-1.aliyuncs.com/qodercli/releases/0.0.9-preview/qodercli_0.0.9-preview_darwin_arm64.zip",
+        "sha256": "bec7c81aabf5c42fcf94b78402508c0e742b6eb36bc7b739f49e54138f05c445"
+      },
+      {
+        "os": "windows",
+        "arch": "amd64",
+        "url": "qoder-ide.oss-ap-southeast-1.aliyuncs.com/qodercli/releases/0.0.9-preview/qodercli_0.0.9-preview_windows_amd64.zip",
+        "sha256": "7504b4712d099b13bd2d29b3649cd7a654d60d0e659b852dc5e6f20c0d4557ce"
+      }
+    ]
+  }
+}
