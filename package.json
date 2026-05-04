@@ -1,0 +1,81 @@
+{
+  "name": "@qoder-ai/qodercli",
+  "version": "0.2.0-1",
+  "description": "qodercli - npm installer",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "qodercli": "./bin/qodercli"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js"
+  },
+  "keywords": [
+    "qoder",
+    "ai",
+    "cli"
+  ],
+  "author": "Qoder AI",
+  "license": "SEE LICENSE IN README.md",
+  "homepage": "https://qoder.com",
+  "files": [
+    "scripts/",
+    "bin/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10",
+    "tar": "^4.4.19"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "preferGlobal": true,
+  "binaries": {
+    "version": "0.2.0",
+    "files": [
+      {
+        "os": "linux",
+        "arch": "amd64",
+        "url": "https://download.qoder.com/qodercli/releases/0.2.0/qodercli-linux-x64.tar.gz",
+        "sha256": "e23d06975fc92b1e784cc0740b8b2c354df0e1a26e2d3171ef8339895370d516"
+      },
+      {
+        "os": "linux",
+        "arch": "arm64",
+        "url": "https://download.qoder.com/qodercli/releases/0.2.0/qodercli-linux-arm64.tar.gz",
+        "sha256": "7ba912d7b3bec275f5c56eb8e795dd76cf2dc60ed521e259df30994252a37311"
+      },
+      {
+        "os": "darwin",
+        "arch": "amd64",
+        "url": "https://download.qoder.com/qodercli/releases/0.2.0/qodercli-darwin-x64.tar.gz",
+        "sha256": "d96f75024f71633a5fa8dc1a8654d518d39e212bc8b1a6339ed6e576b77200ef"
+      },
+      {
+        "os": "darwin",
+        "arch": "arm64",
+        "url": "https://download.qoder.com/qodercli/releases/0.2.0/qodercli-darwin-arm64.tar.gz",
+        "sha256": "846c5e397e0c3a0d4abe4329b42685aa5cc4a3a372410b6b31d1b3d4ab796d44"
+      },
+      {
+        "os": "windows",
+        "arch": "amd64",
+        "url": "https://download.qoder.com/qodercli/releases/0.2.0/qodercli-windows-x64.zip",
+        "sha256": "4b374ef7bc619b761e068bee98b1ff30b118efd8da4df57608452963cb126987"
+      }
+    ]
+  }
+}
