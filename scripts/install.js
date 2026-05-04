@@ -57,11 +57,31 @@ class QoderInstaller {
     const arch = process.arch;
     switch (arch) {
       case 'x64':
+        // On Linux x64, check if CPU supports AVX instructions.
+        // CPUs without AVX need the baseline binary to avoid SIGILL.
+        if (process.platform === 'linux' && !this.hasAVX()) {
+          return 'amd64-baseline';
+        }
         return 'amd64';
       case 'arm64':
         return 'arm64';
       default:
         throw new Error(`Unsupported architecture: ${arch}`);
+    }
+  }
+
+  /**
+   * Check if the CPU supports AVX instructions by reading /proc/cpuinfo.
+   * Returns true if AVX is present or detection is unavailable.
+   * Only returns false when we can confirm AVX is absent.
+   */
+  hasAVX() {
+    try {
+      const cpuinfo = fs.readFileSync('/proc/cpuinfo', 'utf-8');
+      return /^flags\s*:.*\bavx\b/m.test(cpuinfo);
+    } catch (e) {
+      // If we can't read cpuinfo, assume AVX is present (safer default)
+      return true;
     }
   }
 
