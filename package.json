@@ -1,9 +1,8 @@
 {
   "name": "@qoder-ai/qodercli",
-  "version": "1.0.0",
+  "version": "1.0.1-beta1",
   "description": "Qoder AI CLI - AI-powered coding assistant",
   "author": "Qoder AI",
-  "license": "Apache-2.0",
   "type": "module",
   "bin": {
     "qodercli": "bundle/qodercli.js"
