@@ -83,7 +83,7 @@ qodercli
 ### 列出可用模型
 
 ```sh
-qodercli --model-list   # 表格输出当前账号可用的模型
+qodercli --list-models  # 表格输出当前账号可用的模型
 ```
 
 未登录时以非零退出码报错。
