@@ -108,7 +108,7 @@ Each event maps to an array of **hook definitions**. Each definition has:
 | `SubagentStart` | Sub-agent session begins             |
 | `SubagentStop`  | Sub-agent session ends               |
 | `Stop`          | Agent decides to stop                |
-| `StopFailure`   | Stop process fails (error, timeout)  |
+| `StopFailure`   | Agent encounters fatal error and must stop (notification-only) |
 | `PreCompact`    | Before context compaction            |
 | `PostCompact`   | After context compaction             |
 
@@ -150,7 +150,7 @@ Output is parsed from **stdout** as JSON.
 | --------- | -------------------------------- |
 | 0         | Success — parse stdout as JSON   |
 | 2         | Blocking deny — stderr is reason |
-| Other     | Non-blocking warning             |
+| Other     | Non-blocking error, execution continues |
 
 **Stdin** receives the full hook input as JSON (fields vary by event):
 

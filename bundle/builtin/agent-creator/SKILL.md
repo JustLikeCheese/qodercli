@@ -62,7 +62,7 @@ You are a [role]. When invoked:
 
 | Field         | Description                                                                |
 | ------------- | -------------------------------------------------------------------------- |
-| `name`        | Unique identifier (lowercase letters and hyphens only)                     |
+| `name`        | Unique identifier for the agent                                            |
 | `description` | When to delegate to this agent (be specific). Including trigger scenarios. |
 
 ## Writing Effective Descriptions
@@ -86,7 +86,6 @@ description: Expert code review specialist. Proactively reviews code for quality
 | `disallowedTools`| Tools to explicitly deny (string or array)                                          |
 | `model`          | Model to use: `inherit` (default), `sonnet`, `opus`, `haiku`                        |
 | `color`          | Display color: `red`, `blue`, `green`, `yellow`, `purple`, `orange`, `pink`, `cyan` |
-| `displayName`    | Human-friendly display name                                                         |
 | `maxTurns`       | Maximum conversation turns (positive integer)                                       |
 | `timeoutMins`    | Timeout in minutes (positive integer)                                               |
 | `effort`         | Thinking effort: `low`, `medium`, `high`, `max`                                     |
