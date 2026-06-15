@@ -1,6 +1,6 @@
 {
   "name": "@qoder-ai/qodercli",
-  "version": "1.0.13",
+  "version": "1.0.14-beta1",
   "description": "Qoder AI CLI - AI-powered coding assistant",
   "author": "Qoder AI",
   "type": "module",
@@ -13,6 +13,9 @@
     "README.md",
     "LICENSE"
   ],
+  "dependencies": {
+    "sharp": "^0.34.5"
+  },
   "engines": {
     "node": ">=20.0.0"
   },
