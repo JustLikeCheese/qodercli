@@ -80,14 +80,18 @@ def http_get(url, dest):
 
 
 def gh_release_view(tag, repo):
-    """Return dict or None if release missing."""
+    """Return dict or None if release missing. Normalizes CRLF -> LF in text fields."""
     r = subprocess.run(
         ["gh", "release", "view", tag, "--repo", repo, "--json", "name,body"],
         capture_output=True, text=True, encoding="utf-8",
     )
     if r.returncode != 0:
         return None
-    return json.loads(r.stdout)
+    d = json.loads(r.stdout)
+    for k in ("name", "body"):
+        if k in d and isinstance(d[k], str):
+            d[k] = d[k].replace("\r\n", "\n").replace("\r", "\n")
+    return d
 
 
 # ---------- data discovery ----------
