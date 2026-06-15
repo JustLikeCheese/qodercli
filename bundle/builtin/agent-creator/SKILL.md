@@ -33,12 +33,12 @@ Use agents when you need:
 | Location                         | Scope             | Priority |
 | -------------------------------- | ----------------- | -------- |
 | `<project>/${QODER_CONFIG_DIR}/agents/` | Current project   | Higher   |
-| `~/${QODER_CONFIG_DIR}/agents/`         | All your projects | Lower    |
+| `~/${QODER_USER_CONFIG_DIR}/agents/`         | All your projects | Lower    |
 
 **Project agents** (`${QODER_CONFIG_DIR}/agents/`): Ideal for codebase-specific
 agents. Check into version control to share with your team.
 
-**User agents** (`~/${QODER_CONFIG_DIR}/agents/`): Personal agents available across
+**User agents** (`~/${QODER_USER_CONFIG_DIR}/agents/`): Personal agents available across
 all your projects.
 
 ## Agent File Format
@@ -147,8 +147,8 @@ mkdir -p ${QODER_CONFIG_DIR}/agents
 touch ${QODER_CONFIG_DIR}/agents/agent-name.md
 
 # For user-level
-mkdir -p ~/${QODER_CONFIG_DIR}/agents
-touch ~/${QODER_CONFIG_DIR}/agents/agent-name.md
+mkdir -p ~/${QODER_USER_CONFIG_DIR}/agents
+touch ~/${QODER_USER_CONFIG_DIR}/agents/agent-name.md
 ```
 
 ### Step 4: Write Configuration

@@ -1,4 +1,9 @@
 #!/usr/bin/env node
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
 'use strict';
 
 /**
@@ -19,7 +24,7 @@
 
 // --- ripgrep check (all platforms) ---
 try {
-  require('child_process').execSync('rg --version', { stdio: 'ignore' });
+  require('node:child_process').execSync('rg --version', { stdio: 'ignore' });
 } catch {
   console.log(
     '\n  ripgrep (rg) not found. Install for best search performance:' +
@@ -37,8 +42,8 @@ if (process.platform === 'win32') {
 }
 
 function ensureNpmBinOnPath() {
-  const { execSync } = require('child_process');
-  const path = require('path');
+  const { execSync } = require('node:child_process');
+  const path = require('node:path');
 
   // 1. Determine npm's global bin directory.
   //    On Windows, npm places .cmd shims directly in the prefix directory

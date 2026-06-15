@@ -187,7 +187,7 @@ Create the skill directory structure directly. Ask the user for the target
 location:
 
 - **Project-level**: `${QODER_CONFIG_DIR}/skills/<skill-name>/`
-- **User-level**: `~/${QODER_CONFIG_DIR}/skills/<skill-name>/`
+- **User-level**: `~/${QODER_USER_CONFIG_DIR}/skills/<skill-name>/`
 
 Create the following directory structure:
 

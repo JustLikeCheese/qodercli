@@ -35,7 +35,7 @@ Use hooks when you need:
 | ----------- | ------------------------------------ | -------------------------------- |
 | **Project** | `${QODER_CONFIG_DIR}/settings.json`         | Team-shared, version controlled  |
 | **Local**   | `${QODER_CONFIG_DIR}/settings.local.json`   | Personal, not committed          |
-| **User**    | `~/${QODER_CONFIG_DIR}/settings.json`       | Global across all projects       |
+| **User**    | `~/${QODER_USER_CONFIG_DIR}/settings.json`       | Global across all projects       |
 
 **Choose project** for team guardrails and standards.
 **Choose local** for personal preferences and notifications.
@@ -271,7 +271,7 @@ Map the behavior:
 
 - **Project** (`${QODER_CONFIG_DIR}/settings.json`): Team standards, check in
 - **Local** (`${QODER_CONFIG_DIR}/settings.local.json`): Personal, not committed
-- **User** (`~/${QODER_CONFIG_DIR}/settings.json`): Global, all projects
+- **User** (`~/${QODER_USER_CONFIG_DIR}/settings.json`): Global, all projects
 
 ### Step 4: Create the Configuration
 
