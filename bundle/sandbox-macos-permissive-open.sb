@@ -13,7 +13,7 @@
     (subpath (string-append (param "HOME_DIR") "/.npm"))
     (subpath (string-append (param "HOME_DIR") "/.cache"))
     (subpath (string-append (param "HOME_DIR") "/.gitconfig"))
-    ;; Allow writes to included directories from --include-directories
+    ;; Allow writes to included directories from --add-dir
     (subpath (param "INCLUDE_DIR_0"))
     (subpath (param "INCLUDE_DIR_1"))
     (subpath (param "INCLUDE_DIR_2"))
