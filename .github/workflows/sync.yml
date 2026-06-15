@@ -1,0 +1,48 @@
+name: Sync upstream npm releases
+
+on:
+  schedule:
+    # Daily at 03:17 UTC (off-hour to avoid GA queue spikes).
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      max_archives:
+        description: 'Max new versions to archive this run'
+        default: '5'
+        required: false
+      max_backfills:
+        description: 'Max existing empty bodies to backfill this run'
+        default: '20'
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Configure git identity
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Run sync
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAX_ARCHIVES: ${{ inputs.max_archives || '5' }}
+          MAX_BACKFILLS: ${{ inputs.max_backfills || '20' }}
+        run: python scripts/sync.py
