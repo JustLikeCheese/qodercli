@@ -297,6 +297,7 @@ def archive_one(version):
 
     # 2. swap in tarball contents
     src_pkg = replace_repo_files(version)
+    tarball_path = WORK / f"pkg-{version}.tgz"  # written by replace_repo_files
 
     # Tarball-extracted files often have no actual change vs current repo state — but for archival
     # we want a commit per version regardless. Use --allow-empty to handle no-op.
@@ -304,8 +305,15 @@ def archive_one(version):
     sh(f'git commit -m "chore: release {tag}" --allow-empty', cwd=REPO)
     sh(f"git tag {tag}", cwd=REPO)
 
-    # 3. binaries
+    # 3. binaries (old-style versions only — new bundled npm packages have no OSS binaries)
     assets = download_binaries(version, src_pkg)
+
+    # Always attach the canonical npm tarball so the release is a self-contained archive
+    # even if upstream npm/OSS later becomes inaccessible. Rename to include version.
+    if tarball_path.exists():
+        canonical = WORK / f"qodercli-{version}.tgz"
+        shutil.copy2(tarball_path, canonical)
+        assets.append(canonical)
 
     # 4. push
     sh("git push origin HEAD", cwd=REPO)
@@ -327,6 +335,7 @@ def archive_one(version):
     shutil.rmtree(WORK / f"assets-{version}", ignore_errors=True)
     shutil.rmtree(WORK / f"extract-{version}", ignore_errors=True)
     (WORK / f"pkg-{version}.tgz").unlink(missing_ok=True)
+    (WORK / f"qodercli-{version}.tgz").unlink(missing_ok=True)
     print(f"========== {version} done ==========", flush=True)
 
 
