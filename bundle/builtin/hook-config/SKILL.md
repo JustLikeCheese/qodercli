@@ -87,6 +87,48 @@ Each event maps to an array of **hook definitions**. Each definition has:
 | `statusMessage` | No           | Text shown in UI during execution                      |
 | `async`         | No           | Run in background without blocking                     |
 | `asyncRewake`   | No           | Background hook; exit code 2 wakes model               |
+| `rewakeMessage` | No           | Override system-reminder prefix when asyncRewake hook blocks (exit 2). Only with `asyncRewake`. |
+| `rewakeSummary` | No           | One-line summary (default `Stop hook feedback`) shown to user + model when asyncRewake hook blocks. Whitespace collapsed, capped at 300 chars. Only with `asyncRewake`. |
+
+> **Non-interactive mode:** in pipe / SDK / `--print` runs (`isInteractive()`
+> returns `false`) `asyncRewake` hooks transparently degrade to **synchronous**
+> execution: the command runs in the foreground and blocks the current event
+> until it exits. It does **not** background and does **not** wake the model
+> via a queued task-notification (no next turn exists in non-interactive
+> contexts to consume the rewake message).
+>
+> Important — exit-code semantics in degraded mode follow the regular sync
+> hook contract: an exit code 2 is treated as `decision: 'deny'` by
+> `hookRunner` and **will block the current operation** (PreToolUse → tool
+> denied, PostToolUse → feedback to caller, etc.). `rewakeMessage` /
+> `rewakeSummary` are ignored in this mode; the hook's `stderr` is surfaced
+> verbatim as the deny reason.
+
+Example asyncRewake hook with custom rewake text:
+
+```json
+{
+  "PreToolUse": [
+    {
+      "matcher": "Bash",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash /opt/security/scan.sh",
+          "if": "Bash(git commit:*)",
+          "asyncRewake": true,
+          "rewakeMessage": "[security-scan] background review:",
+          "rewakeSummary": "Commit security review found issues",
+          "timeout": 300
+        }
+      ]
+    }
+  ]
+}
+```
+
+The hook script must `exit 2` (and write its diagnostic to `stderr` /
+`stdout`) to actually wake the model with the configured prefix + summary.
 
 ## Hook Events
 
@@ -232,10 +274,17 @@ Narrow when a hook fires within a matched definition:
 { "if": "Edit(*.ts)" }       // Only Edit calls on .ts files
 { "if": "Write(src/**)" }    // Only Write calls under src/
 { "if": "Bash" }             // Any Bash call
+{ "if": "Bash(git commit:*)" } // Only `git commit` (with or without args)
 ```
 
 Format: `"ToolName(glob_pattern)"` or `"ToolName"`.
 The glob matches the tool's primary argument (typically a file path).
+
+A trailing `:*` is treated as a **prefix rule**: `"git commit:*"` matches the
+exact command `git commit` and any command that starts with `git commit `
+(prefix + space + anything). For Bash, compound commands (`VAR=1 git commit`,
+`ls && git commit`) are split via tree-sitter and each sub-command is tested
+against the rule.
 
 ## Hook Creation Workflow
 
