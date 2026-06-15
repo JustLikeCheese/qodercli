@@ -1,6 +1,6 @@
 {
   "name": "@qoder-ai/qodercli",
-  "version": "1.0.1",
+  "version": "1.0.2-beta1",
   "description": "Qoder AI CLI - AI-powered coding assistant",
   "author": "Qoder AI",
   "type": "module",
@@ -36,6 +36,11 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "@ali/qoder-config-service-sdk": "^0.1.2",
+    "@modelcontextprotocol/sdk": "^1.23.0",
+    "zod": "^3.25.76"
   },
   "scripts": {
     "postinstall": "node postinstall.cjs"
