@@ -84,7 +84,7 @@ description: Expert code review specialist. Proactively reviews code for quality
 | ---------------- | ----------------------------------------------------------------------------------- |
 | `tools`          | Tools the agent can use (string or array)                                           |
 | `disallowedTools`| Tools to explicitly deny (string or array)                                          |
-| `model`          | Model to use: `inherit` (default), `sonnet`, `opus`, `haiku`                        |
+| `model`          | Model tier: `inherit` (default), `lite`, `efficient`, `auto`, `performance`, `ultimate` |
 | `color`          | Display color: `red`, `blue`, `green`, `yellow`, `purple`, `orange`, `pink`, `cyan` |
 | `maxTurns`       | Maximum conversation turns (positive integer)                                       |
 | `timeoutMins`    | Timeout in minutes (positive integer)                                               |
@@ -119,6 +119,22 @@ tools: Read, WebSearch, WebFetch
 - `WebFetch` - Fetch web page content
 
 If not specified, the agent inherits default tool access.
+
+#### Choosing a Model
+
+Model tiers progress linearly from lightest to most capable. Higher tiers
+are more capable but consume more credits.
+
+- `inherit` — Use the caller's model. Default and safe choice.
+- `lite` — Simple Q&A, lightweight tasks.
+- `efficient` — Daily coding, code completion.
+- `auto` — Complex tasks, multi-step reasoning.
+- `performance` — Hard engineering problems, large codebases.
+- `ultimate` — Maximum capability, when quality matters most.
+
+Prefer `inherit` unless the agent has a clear reason to differ from the
+caller (e.g. a focused security auditor that benefits from a stronger tier,
+or a high-volume helper that should stay on a lighter tier).
 
 ## Agent Creation Workflow
 
@@ -295,7 +311,7 @@ description:
   sensitive data. Proactively audit security-sensitive code.
 tools: Read, Grep, Glob
 color: red
-model: sonnet
+model: performance
 ---
 
 You are a security expert auditing code for vulnerabilities.
