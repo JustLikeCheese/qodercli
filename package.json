@@ -1,6 +1,6 @@
 {
   "name": "@qoder-ai/qodercli",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Qoder AI CLI - AI-powered coding assistant",
   "author": "Qoder AI",
   "type": "module",
