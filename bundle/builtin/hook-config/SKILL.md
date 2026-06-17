@@ -90,19 +90,15 @@ Each event maps to an array of **hook definitions**. Each definition has:
 | `rewakeMessage` | No           | Override system-reminder prefix when asyncRewake hook blocks (exit 2). Only with `asyncRewake`. |
 | `rewakeSummary` | No           | One-line summary (default `Stop hook feedback`) shown to user + model when asyncRewake hook blocks. Whitespace collapsed, capped at 300 chars. Only with `asyncRewake`. |
 
-> **Non-interactive mode:** in pipe / SDK / `--print` runs (`isInteractive()`
-> returns `false`) `asyncRewake` hooks transparently degrade to **synchronous**
-> execution: the command runs in the foreground and blocks the current event
-> until it exits. It does **not** background and does **not** wake the model
-> via a queued task-notification (no next turn exists in non-interactive
-> contexts to consume the rewake message).
+> **One-shot headless mode:** when no persistent consumer exists (e.g.
+> `claude -p "fix bug"` with text output), `asyncRewake` hooks
+> transparently degrade to **synchronous** execution. In this mode
+> exit code 2 is treated as `decision: 'deny'` and `rewakeMessage` /
+> `rewakeSummary` are ignored.
 >
-> Important — exit-code semantics in degraded mode follow the regular sync
-> hook contract: an exit code 2 is treated as `decision: 'deny'` by
-> `hookRunner` and **will block the current operation** (PreToolUse → tool
-> denied, PostToolUse → feedback to caller, etc.). `rewakeMessage` /
-> `rewakeSummary` are ignored in this mode; the hook's `stderr` is surfaced
-> verbatim as the deny reason.
+> SDK streaming (`--input-format stream-json`) and remote worker modes
+> **do** support background asyncRewake — the persistent connection
+> provides a consumer for rewake notifications.
 
 Example asyncRewake hook with custom rewake text:
 
