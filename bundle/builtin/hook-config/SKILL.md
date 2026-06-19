@@ -82,7 +82,6 @@ Each event maps to an array of **hook definitions**. Each definition has:
 | `prompt`        | prompt/agent | LLM prompt text                                        |
 | `if`            | No           | Per-hook condition: `"ToolName(glob)"` or `"ToolName"` |
 | `name`          | No           | Display name                                           |
-| `description`   | No           | Human-readable description                             |
 | `timeout`       | No           | Seconds before timeout                                 |
 | `statusMessage` | No           | Text shown in UI during execution                      |
 | `async`         | No           | Run in background without blocking                     |
