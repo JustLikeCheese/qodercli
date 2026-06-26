@@ -201,17 +201,20 @@ Output is parsed from **stdout** as JSON.
 }
 ```
 
-**Stdout** JSON output (all fields optional):
+**Stdout** JSON output (all fields optional, but `hookSpecificOutput` requires `hookEventName`):
 
 ```json
 {
   "decision": "allow",
   "reason": "Checks passed",
   "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
     "additionalContext": "Message injected into conversation"
   }
 }
 ```
+
+Note: outputs whose `hookSpecificOutput` lacks `hookEventName` are rejected with `hookSpecificOutput is missing required field "hookEventName"`. Match `hookEventName` to the event your hook is registered on.
 
 Best for: scripts, linters, formatters, external CLI tools.
 
