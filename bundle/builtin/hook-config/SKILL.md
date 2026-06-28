@@ -235,21 +235,32 @@ Best for: webhooks, external integrations, CI/CD triggers.
 
 ### Prompt (`type: "prompt"`)
 
-Single-turn LLM evaluation. The prompt plus hook input go to the model,
-which returns a structured JSON decision.
+Isolated single-turn LLM evaluation. The evaluator runs in a fresh LLM
+session — it only receives your `prompt` text plus the current event JSON
+(`tool_name`, `tool_input`, etc.), and returns a structured `{ ok, reason }`
+decision.
 
 ```jsonc
 {
   "type": "prompt",
-  "prompt": "Review this edit for security issues. Return {\"decision\": \"allow\"} or {\"decision\": \"deny\", \"reason\": \"...\"}"
+  "prompt": "Check if this commit message follows Conventional Commits (type(scope)?: subject). Return {\"ok\": true} or {\"ok\": false, \"reason\": \"...\"}.",
+  "if": "Bash(git commit:*)"
 }
 ```
 
-Best for: AI-powered review gates, semantic validation.
+**Context boundary.** The evaluator has **no access to the main conversation**: it cannot see prior tool calls, the main Agent's reasoning, files read earlier, or any state outside the current event. Write conditions that can be decided from the event itself. Rules that depend on conversation history cannot be evaluated reliably here — use a `command` hook with persistent state, or an `agent` hook that re-checks the filesystem.
+
+Best for: lightweight semantic checks on the event's own data — e.g.
+classifying a Bash command's intent, judging whether a commit message
+follows Conventional Commits. Not for: rules that need to know what the
+main Agent did earlier, or that require reading other files. For
+deterministic checks (path regex, denylisted command, secret signature),
+prefer `command`.
 
 ### Agent (`type: "agent"`)
 
-Spawns a sub-agent with tool access.
+Spawns a sub-agent with tool access (`Read`, `Grep`, `Glob`, optionally
+`Bash`, etc.) to investigate before returning `{ ok, reason }`.
 
 ```jsonc
 {
@@ -261,8 +272,17 @@ Spawns a sub-agent with tool access.
 }
 ```
 
-Best for: complex verification needing tool use (run tests, read files,
-check types).
+**Context boundary.** Like `prompt`, the sub-agent runs in its own session
+and **does not see the main conversation history**. The advantage over
+`prompt` is tool access: it can read files, grep the codebase, and run
+shell commands to verify real state. Use this when verification depends on
+actual filesystem or test output — not as a way to "remember" what the
+main Agent did earlier.
+
+Best for: verification that requires inspecting the real codebase or
+running checks (type-check after edit, run a linter, confirm a file
+matches a pattern). Costs more tokens and time than `prompt`; reach for
+`command` first if a deterministic script can do the job.
 
 ## The `if` Condition
 
@@ -302,17 +322,29 @@ initial understanding and ask the user to refine.
 
 Map the behavior:
 
-| Behavior               | Event         | Matcher        | Handler |
-| ---------------------- | ------------- | -------------- | ------- |
-| Auto-format after edits| `PostToolUse` | `Edit\|Write`  | command |
-| Block protected files  | `PreToolUse`  | `Edit\|Write`  | command |
-| Secret detection       | `PreToolUse`  | `Edit\|Write`  | command |
-| Desktop notifications  | `Notification`| —              | command |
-| Run tests after changes| `PostToolUse` | `Edit\|Write`  | command |
-| AI code review gate    | `PreToolUse`  | `Edit`         | prompt  |
-| Type-check verification| `PostToolUse` | `Edit\|Write`  | agent   |
-| Webhook to CI/CD       | `PostToolUse` | `Edit\|Write`  | http    |
-| Dependency guard       | `PreToolUse`  | `Edit`         | command |
+| Behavior               | Event         | Matcher        | Handler | Notes                          |
+| ---------------------- | ------------- | -------------- | ------- | ------------------------------ |
+| Auto-format after edits| `PostToolUse` | `Edit\|Write`  | command | `if: "Edit(*.{ts,tsx,js,jsx})"` |
+| Block protected files  | `PreToolUse`  | `Edit\|Write`  | command | —                              |
+| Secret detection       | `PreToolUse`  | `Edit\|Write`  | command | —                              |
+| Desktop notifications  | `Notification`| —              | command | `async: true`                  |
+| Run tests after changes| `PostToolUse` | `Edit\|Write`  | command | —                              |
+| Commit-message lint    | `PreToolUse`  | `Bash`         | prompt  | `if: "Bash(git commit:*)"`     |
+| Classify risky Bash    | `PreToolUse`  | `Bash`         | prompt  | Narrow with `if` to avoid firing on every shell call |
+| AI code review gate    | `PreToolUse`  | `Edit\|Write`  | agent   | —                              |
+| Type-check verification| `PostToolUse` | `Edit\|Write`  | agent   | `if: "Edit(*.{ts,tsx})"`       |
+| Webhook to CI/CD       | `PostToolUse` | `Edit\|Write`  | http    | —                              |
+| Dependency guard       | `PreToolUse`  | `Edit`         | command | —                              |
+
+**Choosing between command / prompt / agent.** Default to `command` —
+it is the fastest, cheapest, and most predictable, and a regex or short
+script handles most guardrails (secrets, protected paths, formatters).
+Pick `prompt` only when the decision needs LLM-level semantic judgment
+on the event's own data (e.g. classifying a Bash command's intent),
+and remember the evaluator cannot see the rest of the session. Pick
+`agent` when verification must inspect real files or run checks (type
+check, linter, multi-file review); it has tools but still no
+conversation history.
 
 ### Step 3: Choose Scope
 
@@ -377,6 +409,14 @@ Tell the user to verify:
 - **Long synchronous hooks** — Block the entire interactive session
 - **Stdout pollution** — Non-JSON stdout causes parse errors
 - **Missing shebang** — Scripts without `#!/bin/bash` may fail silently
+- **Session-aware conditions in `prompt` hooks** — The prompt evaluator only
+  sees the current event and has no access to the conversation history.
+  Rules that depend on what the main Agent did earlier cannot be
+  evaluated; use `command` with persistent state, or `agent` that
+  re-checks the filesystem instead.
+- **`prompt` for jobs `command` can do** — If the rule is a deterministic
+  pattern check (regex on a path, denylisted command, secret signature),
+  use `command`. It is faster, cheaper, and reproducible.
 
 ## Examples
 
