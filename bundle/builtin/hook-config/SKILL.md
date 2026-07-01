@@ -77,7 +77,8 @@ Each event maps to an array of **hook definitions**. Each definition has:
 | Field           | Required     | Description                                           |
 | --------------- | ------------ | ----------------------------------------------------- |
 | `type`          | Yes          | `command`, `http`, `prompt`, or `agent`                |
-| `command`       | command type | Shell command to execute                               |
+| `command`       | command type | Shell command to execute (or executable path in exec form, see below) |
+| `args`          | No           | Optional argv array. When set, the hook runs in **exec form** — `command` is invoked directly without a shell. See "Exec form vs Shell form" below |
 | `url`           | http type    | Webhook URL to POST to                                 |
 | `prompt`        | prompt/agent | LLM prompt text                                        |
 | `if`            | No           | Per-hook condition: `"ToolName(glob)"` or `"ToolName"` |
@@ -215,6 +216,24 @@ Output is parsed from **stdout** as JSON.
 ```
 
 Note: outputs whose `hookSpecificOutput` lacks `hookEventName` are rejected with `hookSpecificOutput is missing required field "hookEventName"`. Match `hookEventName` to the event your hook is registered on.
+
+**Placeholders and exec form.**
+
+Placeholders like `${QODER_PROJECT_DIR}`, `${QODER_PLUGIN_ROOT}`, and `${QODER_PLUGIN_DATA}` are exported as environment variables to the hook subprocess.
+
+- Under `bash` shell form, the CLI does **not** pre-substitute placeholders — bash expands them at runtime. Prefer double-quoted form so paths containing spaces or shell metacharacters (`'`, `$`, backticks) parse as a single token:
+  - Recommended: `"${QODER_PLUGIN_ROOT}"/scripts/hook.sh`
+  - Not recommended (unquoted; subject to field splitting / globbing): `${QODER_PLUGIN_ROOT}/scripts/hook.sh`
+- Under `powershell`, `${QODER_PROJECT_DIR}`, `${QODER_PLUGIN_ROOT}`, and `${QODER_PLUGIN_DATA}` are substituted into the command template before invocation.
+- **Exec form** (`args` is set): `command` is an executable path/name and each `args` element is one literal argv entry. The CLI invokes the binary directly (no shell), so no quoting, splitting, or globbing happens. Use it when `command` or args contain complex shell metacharacters and you don't need pipes/redirection/globs.
+
+```jsonc
+{
+  "type": "command",
+  "command": "/usr/bin/python3",
+  "args": ["${QODER_PLUGIN_ROOT}/scripts/check.py", "--strict"]
+}
+```
 
 Best for: scripts, linters, formatters, external CLI tools.
 
