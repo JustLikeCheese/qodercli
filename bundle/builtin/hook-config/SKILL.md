@@ -77,54 +77,16 @@ Each event maps to an array of **hook definitions**. Each definition has:
 | Field           | Required     | Description                                           |
 | --------------- | ------------ | ----------------------------------------------------- |
 | `type`          | Yes          | `command`, `http`, `prompt`, or `agent`                |
-| `command`       | command type | Shell command to execute (or executable path in exec form, see below) |
-| `args`          | No           | Optional argv array. When set, the hook runs in **exec form** — `command` is invoked directly without a shell. See "Exec form vs Shell form" below |
+| `command`       | command type | Shell command to execute                               |
 | `url`           | http type    | Webhook URL to POST to                                 |
 | `prompt`        | prompt/agent | LLM prompt text                                        |
 | `if`            | No           | Per-hook condition: `"ToolName(glob)"` or `"ToolName"` |
 | `name`          | No           | Display name                                           |
+| `description`   | No           | Human-readable description                             |
 | `timeout`       | No           | Seconds before timeout                                 |
 | `statusMessage` | No           | Text shown in UI during execution                      |
 | `async`         | No           | Run in background without blocking                     |
 | `asyncRewake`   | No           | Background hook; exit code 2 wakes model               |
-| `rewakeMessage` | No           | Override system-reminder prefix when asyncRewake hook blocks (exit 2). Only with `asyncRewake`. |
-| `rewakeSummary` | No           | One-line summary (default `Stop hook feedback`) shown to user + model when asyncRewake hook blocks. Whitespace collapsed, capped at 300 chars. Only with `asyncRewake`. |
-
-> **One-shot headless mode:** when no persistent consumer exists (e.g.
-> `claude -p "fix bug"` with text output), `asyncRewake` hooks
-> transparently degrade to **synchronous** execution. In this mode
-> exit code 2 is treated as `decision: 'deny'` and `rewakeMessage` /
-> `rewakeSummary` are ignored.
->
-> SDK streaming (`--input-format stream-json`) and remote worker modes
-> **do** support background asyncRewake — the persistent connection
-> provides a consumer for rewake notifications.
-
-Example asyncRewake hook with custom rewake text:
-
-```json
-{
-  "PreToolUse": [
-    {
-      "matcher": "Bash",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash /opt/security/scan.sh",
-          "if": "Bash(git commit:*)",
-          "asyncRewake": true,
-          "rewakeMessage": "[security-scan] background review:",
-          "rewakeSummary": "Commit security review found issues",
-          "timeout": 300
-        }
-      ]
-    }
-  ]
-}
-```
-
-The hook script must `exit 2` (and write its diagnostic to `stderr` /
-`stdout`) to actually wake the model with the configured prefix + summary.
 
 ## Hook Events
 
@@ -202,36 +164,15 @@ Output is parsed from **stdout** as JSON.
 }
 ```
 
-**Stdout** JSON output (all fields optional, but `hookSpecificOutput` requires `hookEventName`):
+**Stdout** JSON output (all fields optional):
 
 ```json
 {
   "decision": "allow",
   "reason": "Checks passed",
   "hookSpecificOutput": {
-    "hookEventName": "PreToolUse",
     "additionalContext": "Message injected into conversation"
   }
-}
-```
-
-Note: outputs whose `hookSpecificOutput` lacks `hookEventName` are rejected with `hookSpecificOutput is missing required field "hookEventName"`. Match `hookEventName` to the event your hook is registered on.
-
-**Placeholders and exec form.**
-
-Placeholders like `${QODER_PROJECT_DIR}`, `${QODER_PLUGIN_ROOT}`, and `${QODER_PLUGIN_DATA}` are exported as environment variables to the hook subprocess.
-
-- Under `bash` shell form, the CLI does **not** pre-substitute placeholders — bash expands them at runtime. Prefer double-quoted form so paths containing spaces or shell metacharacters (`'`, `$`, backticks) parse as a single token:
-  - Recommended: `"${QODER_PLUGIN_ROOT}"/scripts/hook.sh`
-  - Not recommended (unquoted; subject to field splitting / globbing): `${QODER_PLUGIN_ROOT}/scripts/hook.sh`
-- Under `powershell`, `${QODER_PROJECT_DIR}`, `${QODER_PLUGIN_ROOT}`, and `${QODER_PLUGIN_DATA}` are substituted into the command template before invocation.
-- **Exec form** (`args` is set): `command` is an executable path/name and each `args` element is one literal argv entry. The CLI invokes the binary directly (no shell), so no quoting, splitting, or globbing happens. Use it when `command` or args contain complex shell metacharacters and you don't need pipes/redirection/globs.
-
-```jsonc
-{
-  "type": "command",
-  "command": "/usr/bin/python3",
-  "args": ["${QODER_PLUGIN_ROOT}/scripts/check.py", "--strict"]
 }
 ```
 
@@ -254,32 +195,21 @@ Best for: webhooks, external integrations, CI/CD triggers.
 
 ### Prompt (`type: "prompt"`)
 
-Isolated single-turn LLM evaluation. The evaluator runs in a fresh LLM
-session — it only receives your `prompt` text plus the current event JSON
-(`tool_name`, `tool_input`, etc.), and returns a structured `{ ok, reason }`
-decision.
+Single-turn LLM evaluation. The prompt plus hook input go to the model,
+which returns a structured JSON decision.
 
 ```jsonc
 {
   "type": "prompt",
-  "prompt": "Check if this commit message follows Conventional Commits (type(scope)?: subject). Return {\"ok\": true} or {\"ok\": false, \"reason\": \"...\"}.",
-  "if": "Bash(git commit:*)"
+  "prompt": "Review this edit for security issues. Return {\"decision\": \"allow\"} or {\"decision\": \"deny\", \"reason\": \"...\"}"
 }
 ```
 
-**Context boundary.** The evaluator has **no access to the main conversation**: it cannot see prior tool calls, the main Agent's reasoning, files read earlier, or any state outside the current event. Write conditions that can be decided from the event itself. Rules that depend on conversation history cannot be evaluated reliably here — use a `command` hook with persistent state, or an `agent` hook that re-checks the filesystem.
-
-Best for: lightweight semantic checks on the event's own data — e.g.
-classifying a Bash command's intent, judging whether a commit message
-follows Conventional Commits. Not for: rules that need to know what the
-main Agent did earlier, or that require reading other files. For
-deterministic checks (path regex, denylisted command, secret signature),
-prefer `command`.
+Best for: AI-powered review gates, semantic validation.
 
 ### Agent (`type: "agent"`)
 
-Spawns a sub-agent with tool access (`Read`, `Grep`, `Glob`, optionally
-`Bash`, etc.) to investigate before returning `{ ok, reason }`.
+Spawns a sub-agent with tool access.
 
 ```jsonc
 {
@@ -291,17 +221,8 @@ Spawns a sub-agent with tool access (`Read`, `Grep`, `Glob`, optionally
 }
 ```
 
-**Context boundary.** Like `prompt`, the sub-agent runs in its own session
-and **does not see the main conversation history**. The advantage over
-`prompt` is tool access: it can read files, grep the codebase, and run
-shell commands to verify real state. Use this when verification depends on
-actual filesystem or test output — not as a way to "remember" what the
-main Agent did earlier.
-
-Best for: verification that requires inspecting the real codebase or
-running checks (type-check after edit, run a linter, confirm a file
-matches a pattern). Costs more tokens and time than `prompt`; reach for
-`command` first if a deterministic script can do the job.
+Best for: complex verification needing tool use (run tests, read files,
+check types).
 
 ## The `if` Condition
 
@@ -311,17 +232,10 @@ Narrow when a hook fires within a matched definition:
 { "if": "Edit(*.ts)" }       // Only Edit calls on .ts files
 { "if": "Write(src/**)" }    // Only Write calls under src/
 { "if": "Bash" }             // Any Bash call
-{ "if": "Bash(git commit:*)" } // Only `git commit` (with or without args)
 ```
 
 Format: `"ToolName(glob_pattern)"` or `"ToolName"`.
 The glob matches the tool's primary argument (typically a file path).
-
-A trailing `:*` is treated as a **prefix rule**: `"git commit:*"` matches the
-exact command `git commit` and any command that starts with `git commit `
-(prefix + space + anything). For Bash, compound commands (`VAR=1 git commit`,
-`ls && git commit`) are split via tree-sitter and each sub-command is tested
-against the rule.
 
 ## Hook Creation Workflow
 
@@ -341,29 +255,17 @@ initial understanding and ask the user to refine.
 
 Map the behavior:
 
-| Behavior               | Event         | Matcher        | Handler | Notes                          |
-| ---------------------- | ------------- | -------------- | ------- | ------------------------------ |
-| Auto-format after edits| `PostToolUse` | `Edit\|Write`  | command | `if: "Edit(*.{ts,tsx,js,jsx})"` |
-| Block protected files  | `PreToolUse`  | `Edit\|Write`  | command | —                              |
-| Secret detection       | `PreToolUse`  | `Edit\|Write`  | command | —                              |
-| Desktop notifications  | `Notification`| —              | command | `async: true`                  |
-| Run tests after changes| `PostToolUse` | `Edit\|Write`  | command | —                              |
-| Commit-message lint    | `PreToolUse`  | `Bash`         | prompt  | `if: "Bash(git commit:*)"`     |
-| Classify risky Bash    | `PreToolUse`  | `Bash`         | prompt  | Narrow with `if` to avoid firing on every shell call |
-| AI code review gate    | `PreToolUse`  | `Edit\|Write`  | agent   | —                              |
-| Type-check verification| `PostToolUse` | `Edit\|Write`  | agent   | `if: "Edit(*.{ts,tsx})"`       |
-| Webhook to CI/CD       | `PostToolUse` | `Edit\|Write`  | http    | —                              |
-| Dependency guard       | `PreToolUse`  | `Edit`         | command | —                              |
-
-**Choosing between command / prompt / agent.** Default to `command` —
-it is the fastest, cheapest, and most predictable, and a regex or short
-script handles most guardrails (secrets, protected paths, formatters).
-Pick `prompt` only when the decision needs LLM-level semantic judgment
-on the event's own data (e.g. classifying a Bash command's intent),
-and remember the evaluator cannot see the rest of the session. Pick
-`agent` when verification must inspect real files or run checks (type
-check, linter, multi-file review); it has tools but still no
-conversation history.
+| Behavior               | Event         | Matcher        | Handler |
+| ---------------------- | ------------- | -------------- | ------- |
+| Auto-format after edits| `PostToolUse` | `Edit\|Write`  | command |
+| Block protected files  | `PreToolUse`  | `Edit\|Write`  | command |
+| Secret detection       | `PreToolUse`  | `Edit\|Write`  | command |
+| Desktop notifications  | `Notification`| —              | command |
+| Run tests after changes| `PostToolUse` | `Edit\|Write`  | command |
+| AI code review gate    | `PreToolUse`  | `Edit`         | prompt  |
+| Type-check verification| `PostToolUse` | `Edit\|Write`  | agent   |
+| Webhook to CI/CD       | `PostToolUse` | `Edit\|Write`  | http    |
+| Dependency guard       | `PreToolUse`  | `Edit`         | command |
 
 ### Step 3: Choose Scope
 
@@ -428,14 +330,6 @@ Tell the user to verify:
 - **Long synchronous hooks** — Block the entire interactive session
 - **Stdout pollution** — Non-JSON stdout causes parse errors
 - **Missing shebang** — Scripts without `#!/bin/bash` may fail silently
-- **Session-aware conditions in `prompt` hooks** — The prompt evaluator only
-  sees the current event and has no access to the conversation history.
-  Rules that depend on what the main Agent did earlier cannot be
-  evaluated; use `command` with persistent state, or `agent` that
-  re-checks the filesystem instead.
-- **`prompt` for jobs `command` can do** — If the rule is a deterministic
-  pattern check (regex on a path, denylisted command, secret signature),
-  use `command`. It is faster, cheaper, and reproducible.
 
 ## Examples
 
