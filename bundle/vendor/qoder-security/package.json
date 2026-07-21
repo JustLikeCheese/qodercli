@@ -1,0 +1,7 @@
+{
+  "name": "security-scan",
+  "version": "0.8.1",
+  "description": "Automated security review for Qoder. Pattern-based warnings on edits, cloud-backed diff review on Stop, and agentic commit/push review with SHA tracking.",
+  "license": "Apache-2.0",
+  "private": true
+}
