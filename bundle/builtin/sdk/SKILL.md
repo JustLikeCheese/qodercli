@@ -1,15 +1,15 @@
 ---
 name: sdk
 description: >-
-  Guide users building apps, scripts, CI pipelines, or automations on top of the
-  Qoder TypeScript SDK (`@qoder-ai/qoder-agent-sdk`). Use when the user mentions
-  integrating, installing, or writing code against the Qoder SDK; says `query()`,
-  `createSdkMcpServer`, `tool()`, `accessTokenFromEnv`, `canUseTool`, or
-  `@qoder-ai/qoder-agent-sdk`; asks to run Qoder agents programmatically from a
-  script, CI/CD pipeline, backend service, or other code outside QoderCLI; wants
-  to configure MCP servers for an SDK agent, handle streaming, permissions, hooks,
-  session management, or sub-agents; or is wiring Qoder into an automation or bot.
-  Use eagerly rather than answering from memory; the SDK surface evolves and this
+  Guide users building apps, scripts, CI pipelines, or automations on top of
+  this CLI's companion TypeScript agent SDK. Use when the user mentions the
+  companion SDK; asks to integrate, install, or write code against the SDK;
+  says `query()`, `createSdkMcpServer`, `tool()`, `accessTokenFromEnv`, or
+  `canUseTool`; asks to run agents programmatically from a script, CI/CD
+  pipeline, backend service, or other code outside this CLI; wants to configure
+  MCP servers for an SDK agent, handle streaming, permissions, hooks, session
+  management, or sub-agents; or is wiring agents into an automation or bot. Use
+  eagerly rather than answering from memory; the SDK surface evolves and this
   skill is the source of truth for the external package.
 ---
 

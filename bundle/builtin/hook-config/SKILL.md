@@ -3,7 +3,7 @@ name: hook-config
 description:
   Guide for creating and configuring hooks. Use when users want to add
   automated behaviors triggered by tool execution, session lifecycle,
-  or other events in the Qoder CLI hook system.
+  or other events in the CLI hook system.
 allowed-tools: Edit, Write
 ---
 
