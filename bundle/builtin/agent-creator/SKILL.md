@@ -30,10 +30,13 @@ Use agents when you need:
 
 ## Agent Locations
 
-| Location                         | Scope             | Priority |
-| -------------------------------- | ----------------- | -------- |
-| `<project>/${QODER_CONFIG_DIR}/agents/` | Current project   | Higher   |
-| `~/${QODER_USER_CONFIG_DIR}/agents/`         | All your projects | Lower    |
+<!-- QODER_CONFIG_DIR and QODER_USER_CONFIG_DIR below are prompt template
+placeholders resolved by argumentSubstitution.ts, not shell environment variables. -->
+
+| Location                                  | Scope             | Priority |
+| ----------------------------------------- | ----------------- | -------- |
+| `<project>/${QODER_CONFIG_DIR}/agents/`    | Current project   | Higher   |
+| `~/${QODER_USER_CONFIG_DIR}/agents/`       | All your projects | Lower    |
 
 **Project agents** (`${QODER_CONFIG_DIR}/agents/`): Ideal for codebase-specific
 agents. Check into version control to share with your team.
@@ -142,8 +145,8 @@ or a high-volume helper that should stay on a lighter tier).
 
 If not sure where to create the agent, ask the user with two options:
 
-- **Project-level** (`.agents/`): For team-shared, codebase-specific agents
-- **User-level** (`~/.agents/`): For personal agents across all projects
+- **Project-level** (`${QODER_CONFIG_DIR}/agents/`): For team-shared, codebase-specific agents
+- **User-level** (`~/${QODER_USER_CONFIG_DIR}/agents/`): For personal agents across all projects
 
 ### Step 2: Gather Requirements
 

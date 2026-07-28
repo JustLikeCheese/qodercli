@@ -146,8 +146,57 @@ PAT 可在 Qoder 账号设置页 (`https://qoder.com/account/integrations`) 创�
 | 环境变量                      | 说明                              |
 | ----------------------------- | --------------------------------- |
 | `QODER_PERSONAL_ACCESS_TOKEN` | PAT 令牌，设置后自动使用 PAT 认证 |
-| `QODER_CONFIG_DIR`            | 自定义配置目录（默认 `~/.qoder`） |
 | `NO_BROWSER`                  | 设置后禁止自动打开浏览器          |
+
+### 配置目录环境变量
+
+两类变量控制不同的路径维度：完整路径变量把它的值作为整个用户配置根目录；目录名称变量提供一个经过校验的单层目录名。没有完整路径覆盖时，该目录名用于组成默认用户配置根目录；无论是否存在完整路径覆盖，它都会决定项目资源目录和附加目录中已支持资源的目录名称。
+
+| 站点    | 完整路径变量         | 目录名称变量              |
+| ------- | -------------------- | ------------------------- |
+| Qoder   | `QODER_CONFIG_DIR`   | `QODER_CONFIG_DIR_NAME`   |
+| QoderCN | `QODERCN_CONFIG_DIR` | `QODERCN_CONFIG_DIR_NAME` |
+
+目录名称变量的非空值会先规范化为 Unicode NFC 形式，再通过校验并作为目录名使用。除 NFC 规范化外，CLI 不会 trim、自动补点或改变大小写。例如，`abc` 使用目录 `abc`，`.abc` 使用目录 `.abc`。将当前站点的目录名称变量设置为 `abc` 后，各范围使用下表中的路径：
+
+| 范围                 | Qoder 默认路径                 | QoderCN 默认路径               | 目录名称设置为 `abc` 后     |
+| -------------------- | ------------------------------ | ------------------------------ | --------------------------- |
+| 用户配置根目录       | `~/.qoder`                     | `~/.qoder-cn`                  | `~/abc`                     |
+| 项目资源目录         | `<cwd>/.qoder`                 | `<cwd>/.qoder`                 | `<cwd>/abc`                 |
+| 附加目录中的资源目录 | `<additionalDirectory>/.qoder` | `<additionalDirectory>/.qoder` | `<additionalDirectory>/abc` |
+
+上表中的用户路径假设未设置完整路径变量、`--config-dir` 或 `QODER_CLI_HOME` / `QODERCN_CLI_HOME`。用户配置根目录按以下优先级确定：
+
+1. `--config-dir`；
+2. Qoder 的 `QODER_CONFIG_DIR`，或 QoderCN 的 `QODERCN_CONFIG_DIR`；
+3. Qoder 的 `QODER_CLI_HOME`，或 QoderCN 的 `QODERCN_CLI_HOME`，再加所选目录名；
+4. 系统用户目录再加所选目录名。
+
+目录名称变量不会覆盖完整路径变量，也不会从完整路径的最后一级反推目录名。例如，同时设置 `QODER_CONFIG_DIR_NAME=abc` 和 `QODER_CONFIG_DIR=/data/qoder-config` 时，用户配置根目录为 `/data/qoder-config`，项目资源目录仍为 `<cwd>/abc`，附加资源目录仍为 `<additionalDirectory>/abc`。
+
+Qoder 和 QoderCN 使用同一套目录名称规则。NFC 规范化后的名称长度必须为 1～64 个 Unicode 字符，可以包含 Unicode 字母、数字、组合字符、点号、下划线、连字符和名称中间的普通空格。`abc`、`.abc`、`agents`、`.agents`、`联想配置` 和 `team config` 都是合法名称。由 `e` 加组合重音构成的 `équipe` 会规范化为 NFC 形式的 `équipe`，用户、项目和附加目录统一使用该结果。
+
+名称不能带前导或尾随空格，不能以点号结尾，也不能包含允许范围之外的字符。`CON`、`PRN`、`AUX`、`NUL`、`COM1`～`COM9`、`LPT1`～`LPT9` 等保留名称及其带扩展名形式同样不允许使用。因此，` abc`、`abc `、`abc.`、`abc/def`、`abc@def` 和 `NUL.txt` 都会被拒绝。
+
+以下目录名称受到保护，不能用作配置目录：`.git`、`.svn`、`.hg`、`.vscode`、`.idea`、`.husky`、`.github`、`node_modules` 和 `bower_components`。保护规则采用不区分大小写的精确匹配，因此 `.GIT` 和 `Node_Modules` 也会被拒绝，而 `.github-backup`、`my.git`、`config-service` 和 `.agents` 仍然合法。变量未设置或值为严格的空字符串时使用当前站点的默认目录名；其他非法值或受保护名称会导致 CLI 启动失败并显示错误，不会静默回退到默认目录。
+
+即使名称未被强制禁止，也不建议选择构建产物、缓存、凭据目录或其他由外部工具管理的目录，这些目录可能被覆盖或清理，进而导致 Qoder 配置或运行数据丢失。
+
+设置目录名称后，CLI 不会合并或回退读取旧目录：Qoder 用户目录不回退到 `~/.qoder`，QoderCN 用户目录不回退到 `~/.qoder-cn`，项目和附加目录不回退到同级 `.qoder`。
+
+附加目录仍只提供其原本支持的资源，例如 skills、commands，以及受现有开关控制的 rules 和上下文资源；不会新增加载 settings、agent 定义、output styles 或 workflows。
+
+CLI 默认不把 `.agents/skills` 作为独立兼容来源。需要兼容既有目录时，在最终生效的 settings 中配置：
+
+```json
+{
+  "skills": {
+    "loadFromAgentsDirectory": true
+  }
+}
+```
+
+修改后需要重启 CLI。开启后，CLI 会加载用户、项目和附加目录中的 `.agents/skills`，监听用户和项目的 `.agents/skills`，并恢复工作区子目录的祖先 `.agents/skills` 动态发现。该开关只恢复兼容来源，不会绕过现有的项目可信判断或来源限制：工作区未受信任时，用户级 `.agents/skills` 仍可加载，项目和附加目录中的 `.agents/skills` 不会加载。该开关也不会从 `.agents` 加载其他资源。将目录名称显式设置为 `.agents` 属于正常配置目录用法，不依赖此兼容开关。
 
 ### 启动参数环境变量
 
