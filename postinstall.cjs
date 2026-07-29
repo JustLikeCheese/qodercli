@@ -15,21 +15,18 @@
 /**
  * npm postinstall script for @qoder-ai/qodercli (pure JS bundle).
  *
+ * On all platforms: verifies that either the platform ripgrep package or a
+ * system rg is available.
  * On Windows: ensures npm's global bin directory is on the user's PATH.
- * On all platforms: hints about optional ripgrep dependency.
  *
  * IMPORTANT: This script must NEVER cause `npm install` to fail.
  * All operations are wrapped in try/catch and errors are silently ignored.
  */
 
-// --- ripgrep check (all platforms) ---
 try {
-  require('node:child_process').execSync('rg --version', { stdio: 'ignore' });
+  warnIfRipgrepUnavailable();
 } catch {
-  console.log(
-    '\n  ripgrep (rg) not found. Install for best search performance:' +
-      '\n  https://github.com/BurntSushi/ripgrep#installation\n',
-  );
+  // Silent — never break npm install
 }
 
 // --- Windows PATH registration ---
@@ -39,6 +36,46 @@ if (process.platform === 'win32') {
   } catch {
     // Silent — never break npm install
   }
+}
+
+function warnIfRipgrepUnavailable() {
+  const { execFileSync } = require('node:child_process');
+  const { readFileSync } = require('node:fs');
+  const path = require('node:path');
+  const manifest = JSON.parse(
+    readFileSync(path.join(__dirname, 'package.json'), 'utf8'),
+  );
+  const packageSuffix = `-ripgrep-${process.platform}-${process.arch}`;
+  const ripgrepPackage = Object.keys(manifest.optionalDependencies || {}).find(
+    (packageName) => packageName.endsWith(packageSuffix),
+  );
+  const binaryName = process.platform === 'win32' ? 'rg.exe' : 'rg';
+
+  if (ripgrepPackage) {
+    try {
+      require.resolve(`${ripgrepPackage}/bin/${binaryName}`, {
+        paths: [__dirname],
+      });
+      return;
+    } catch {
+      // The optional dependency may have been explicitly omitted.
+    }
+  }
+
+  try {
+    execFileSync('rg', ['--version'], {
+      stdio: 'ignore',
+      windowsHide: true,
+    });
+    return;
+  } catch {
+    // Fall through to an actionable, non-fatal warning.
+  }
+
+  console.log(
+    '\n  ripgrep is unavailable. Reinstall without --omit=optional, or install rg on PATH.' +
+      '\n  Glob and Grep require ripgrep.\n',
+  );
 }
 
 function ensureNpmBinOnPath() {
