@@ -88,6 +88,17 @@ qodercli --list-models  # 表格输出当前账号可用的模型
 
 未登录时以非零退出码报错。
 
+### 本地使用 DevTools
+
+DevTools 仅供本地源码调试，用于查看模型请求上下文、Token 使用情况和网络请求；发布产物不包含该功能。
+
+```sh
+npm run build
+npm start -- --devtools
+```
+
+启动后会自动打开 `http://127.0.0.1:25417`。在 Qoder CLI 中发送消息，即可在 `Model Context` 页面查看原始请求数据。
+
 ## 📋 核心功能
 
 ### 代码理解与生成
