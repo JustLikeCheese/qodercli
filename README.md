@@ -97,7 +97,7 @@ npm run build
 npm start -- --devtools
 ```
 
-启动后会自动打开 `http://127.0.0.1:25417`。在 Qoder CLI 中发送消息，即可在 `Model Context` 页面查看原始请求数据。
+启动后会自动打开 `http://127.0.0.1:25417`。在 Qoder CLI 中发送消息，即可在 `Model Context` 页面查看原始请求、规范化模型响应、Token 使用情况和失败详情。
 
 ## 📋 核心功能
 
