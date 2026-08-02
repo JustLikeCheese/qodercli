@@ -197,10 +197,10 @@ Qoder 和 QoderCN 使用同一套目录名称规则。NFC 规范化后的名称�
 
 附加目录仍只提供其原本支持的资源，例如 skills、commands，以及受现有开关控制的 rules 和上下文资源；不会新增加载 settings、agent 定义、output styles 或 workflows。
 
-CLI 默认不把 `.agents/skills` 作为独立兼容来源。如需加载既有 `.agents/skills`，可以在 CLI 中执行 `/settings`，然后：
+CLI 默认把 `.agents/skills` 作为兼容来源加载。如需停止加载既有 `.agents/skills`，可以在 CLI 中执行 `/settings`，然后：
 
 1. 选择 `User Settings` 或 `Project Settings`；
-2. 搜索并开启 `Load Skills from .agents/skills`；
+2. 搜索并关闭 `Load Skills from .agents/skills`；
 3. 按界面提示重启 CLI。
 
 `User Settings` 对当前用户的所有项目生效；`Project Settings` 只对当前项目生效，并按现有 settings 合并规则覆盖用户设置。项目设置仍受工作区信任限制。
@@ -210,12 +210,14 @@ CLI 默认不把 `.agents/skills` 作为独立兼容来源。如需加载既有 
 ```json
 {
   "skills": {
-    "loadFromAgentsDirectory": true
+    "loadFromAgentsDirectory": false
   }
 }
 ```
 
-开启后，CLI 会加载用户、项目和附加目录中的 `.agents/skills`，监听用户和项目的 `.agents/skills`，并恢复工作区子目录的祖先 `.agents/skills` 动态发现。该开关只恢复兼容来源，不会绕过现有的项目可信判断或来源限制：工作区未受信任时，用户级 `.agents/skills` 仍可加载，项目和附加目录中的 `.agents/skills` 不会加载。该开关也不会从 `.agents` 加载其他资源。将目录名称显式设置为 `.agents` 属于正常配置目录用法，不依赖此兼容开关。
+开启时（默认），CLI 会加载用户、项目和附加目录中的 `.agents/skills`，监听用户和项目的 `.agents/skills`，并支持工作区子目录的祖先 `.agents/skills` 动态发现。该开关只控制兼容来源，不会绕过现有的项目可信判断或来源限制：工作区未受信任时，用户级 `.agents/skills` 仍可加载，项目和附加目录中的 `.agents/skills` 不会加载。该开关也不会从 `.agents` 加载其他资源。将目录名称显式设置为 `.agents` 属于正常配置目录用法，不依赖此兼容开关。
+
+Agent SDK 模式是例外：未显式配置该开关时保持关闭，需要该兼容来源的 SDK 使用方要在 settings 或 `--settings` 中显式设置为 `true`。
 
 ### 启动参数环境变量
 
