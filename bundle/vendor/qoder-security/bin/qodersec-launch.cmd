@@ -9,8 +9,8 @@ REM
 REM Glue (unified under ~/.qodersec):
 REM   - locate the binary in ~/.qodersec/bin/ (downloaded via bootstrap on first run)
 REM   - resolve QODERSEC_HOME (default ~/.qodersec) — the ONE root for config + creds
-REM     + logs + state; seed a default config.yaml there on first run from the
-REM     plugin's bundled template so it persists across plugin upgrades
+REM     + logs + state; seed/refresh config.yaml there from the plugin's bundled
+REM     template when the plugin version changes
 REM   - maps QODERSEC_HOME → CODESEC_HOME internally (Go binary reads CODESEC_HOME)
 REM   - forward stdin + every argument unchanged
 REM
@@ -24,12 +24,14 @@ REM Tell the Go binary to use qodersec-specific naming (log file, etc.)
 set "CODESEC_LOG_NAME=qodersec"
 REM Pinned dependency versions (updated when plugin is published)
 REM Set both QODERSEC_* and CODESEC_* for Go binary compatibility
-set "QODERSEC_CLI_VERSION_GLOBAL=0.8.0"
-set "QODERSEC_CLI_VERSION_CN=0.8.0"
-set "CODESEC_CLI_VERSION_GLOBAL=0.8.0"
-set "CODESEC_CLI_VERSION_CN=0.8.0"
-set "QODERCLI_VERSION_GLOBAL=1.0.45"
-set "QODERCLI_VERSION_CN=1.0.45"
+set "QODERSEC_CLI_VERSION_GLOBAL=0.8.5"
+set "QODERSEC_CLI_VERSION_CN=0.8.5"
+set "CODESEC_CLI_VERSION_GLOBAL=0.8.5"
+set "CODESEC_CLI_VERSION_CN=0.8.5"
+set "QODERCLI_VERSION_GLOBAL=1.1.7"
+set "QODERCLI_VERSION_CN=1.1.7"
+set "QODERCLI_MANIFEST_URL_GLOBAL=https://download.qoder.com/qodercli/channels/1.1.7/manifest.json"
+set "QODERCLI_MANIFEST_URL_CN=https://static.qoder.com.cn/qoder-cli-cn/channels/1.1.7/manifest.json"
 
 REM Resolve home without a parenthesized block so paths containing ! or ) remain intact.
 if defined QODERSEC_HOME goto use_qodersec_home
@@ -47,10 +49,34 @@ if not exist "%CHOME%\." echo qodersec-launch: %CHOME% exists but is not a direc
 if not exist "%CHOME%\." exit /b 127
 if not exist "%CHOME%\logs" mkdir "%CHOME%\logs" >nul 2>nul
 set "_QODERSEC_LOG=%CHOME%\logs\qodersec.log"
-if exist "%CHOME%\config.yaml" goto config_ready
+
+REM Seed/refresh the persistent config when the plugin version changes.
+set "PLUGIN_VERSION="
+if exist "%PLUGIN_ROOT%\.qoder-plugin\plugin.json" (
+    for /f "usebackq tokens=2 delims=:" %%V in (`findstr /c:"version" "%PLUGIN_ROOT%\.qoder-plugin\plugin.json"`) do (
+        set "PLUGIN_VERSION=%%~V"
+        goto plugin_version_read
+    )
+)
+:plugin_version_read
+if not defined PLUGIN_VERSION goto plugin_version_normalized
+set "PLUGIN_VERSION=%PLUGIN_VERSION:"=%"
+set "PLUGIN_VERSION=%PLUGIN_VERSION:,=%"
+set "PLUGIN_VERSION=%PLUGIN_VERSION: =%"
+:plugin_version_normalized
+set "VERSION_MARKER=%CHOME%\.config-version"
+set "NEED_CONFIG=0"
+if not exist "%CHOME%\config.yaml" set "NEED_CONFIG=1"
+if not defined PLUGIN_VERSION goto config_marker_checked
+if not exist "%VERSION_MARKER%" set "NEED_CONFIG=1"
+if not exist "%VERSION_MARKER%" goto config_marker_checked
+set /p INSTALLED_CONFIG_VERSION=<"%VERSION_MARKER%"
+if not "%INSTALLED_CONFIG_VERSION%"=="%PLUGIN_VERSION%" set "NEED_CONFIG=1"
+:config_marker_checked
+if not "%NEED_CONFIG%"=="1" goto config_ready
 if exist "%PLUGIN_ROOT%\config.yaml" copy /y "%PLUGIN_ROOT%\config.yaml" "%CHOME%\config.yaml" >nul 2>nul
-if exist "%CHOME%\config.yaml" goto config_ready
-if exist "%PLUGIN_ROOT%\config.yaml.example" copy /y "%PLUGIN_ROOT%\config.yaml.example" "%CHOME%\config.yaml" >nul 2>nul
+if not exist "%CHOME%\config.yaml" if exist "%PLUGIN_ROOT%\config.yaml.example" copy /y "%PLUGIN_ROOT%\config.yaml.example" "%CHOME%\config.yaml" >nul 2>nul
+if defined PLUGIN_VERSION > "%VERSION_MARKER%" echo %PLUGIN_VERSION%
 :config_ready
 REM Map to internal names the Go binary reads
 set "QODERSEC_HOME=%CHOME%"
