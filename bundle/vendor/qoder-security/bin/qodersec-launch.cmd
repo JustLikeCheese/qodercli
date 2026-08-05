@@ -24,14 +24,14 @@ REM Tell the Go binary to use qodersec-specific naming (log file, etc.)
 set "CODESEC_LOG_NAME=qodersec"
 REM Pinned dependency versions (updated when plugin is published)
 REM Set both QODERSEC_* and CODESEC_* for Go binary compatibility
-set "QODERSEC_CLI_VERSION_GLOBAL=0.8.5"
-set "QODERSEC_CLI_VERSION_CN=0.8.5"
-set "CODESEC_CLI_VERSION_GLOBAL=0.8.5"
-set "CODESEC_CLI_VERSION_CN=0.8.5"
-set "QODERCLI_VERSION_GLOBAL=1.1.7"
-set "QODERCLI_VERSION_CN=1.1.7"
-set "QODERCLI_MANIFEST_URL_GLOBAL=https://download.qoder.com/qodercli/channels/1.1.7/manifest.json"
-set "QODERCLI_MANIFEST_URL_CN=https://static.qoder.com.cn/qoder-cli-cn/channels/1.1.7/manifest.json"
+set "QODERSEC_CLI_VERSION_GLOBAL=0.8.6"
+set "QODERSEC_CLI_VERSION_CN=0.8.6"
+set "CODESEC_CLI_VERSION_GLOBAL=0.8.6"
+set "CODESEC_CLI_VERSION_CN=0.8.6"
+set "QODERCLI_VERSION_GLOBAL=1.1.12"
+set "QODERCLI_VERSION_CN=1.1.12"
+set "QODERCLI_MANIFEST_URL_GLOBAL=https://download.qoder.com/qodercli/channels/1.1.12/manifest.json"
+set "QODERCLI_MANIFEST_URL_CN=https://static.qoder.com.cn/qoder-cli-cn/channels/1.1.12/manifest.json"
 
 REM Resolve home without a parenthesized block so paths containing ! or ) remain intact.
 if defined QODERSEC_HOME goto use_qodersec_home
