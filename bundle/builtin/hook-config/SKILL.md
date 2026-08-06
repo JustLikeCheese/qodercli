@@ -139,16 +139,24 @@ The hook script must `exit 2` (and write its diagnostic to `stderr` /
 
 ### Session & Agent Lifecycle
 
-| Event           | When                                 |
-| --------------- | ------------------------------------ |
-| `SessionStart`  | Session initializes                  |
-| `SessionEnd`    | Session tears down                   |
-| `SubagentStart` | Sub-agent session begins             |
-| `SubagentStop`  | Sub-agent session ends               |
-| `Stop`          | Agent decides to stop                |
+| Event           | When                                                          |
+| --------------- | ------------------------------------------------------------- |
+| `SessionStart`  | Session initializes                                           |
+| `SessionEnd`    | Session tears down                                            |
+| `SubagentStart` | Sub-agent session begins                                      |
+| `SubagentStop`  | Sub-agent session ends                                        |
+| `TeammateIdle`  | Teammate attempts to become idle                              |
+| `Stop`          | Agent decides to stop                                         |
 | `StopFailure`   | Agent encounters fatal error and must stop (notification-only) |
-| `PreCompact`    | Before context compaction            |
-| `PostCompact`   | After context compaction             |
+| `PreCompact`    | Before context compaction                                     |
+| `PostCompact`   | After context compaction                                      |
+
+`TeammateIdle` input includes `teammate_name` and `team_name`. Exit code 2
+uses stderr as feedback. A JSON output with `decision: "deny"` or
+`continue: false` also blocks the idle transition; `reason` or `stopReason`
+provides the feedback text. The feedback is sent to the same teammate as a new
+turn. The teammate is marked idle only after a later `TeammateIdle` evaluation
+allows the transition.
 
 ### User, Config & Notification Events
 
