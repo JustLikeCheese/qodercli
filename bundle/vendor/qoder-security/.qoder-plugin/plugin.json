@@ -1,6 +1,6 @@
 {
   "name": "security-scan",
-  "version": "0.8.6",
+  "version": "0.8.8",
   "displayName": "Qoder Security",
   "description": "Automated security review for Qoder. Pattern-based warnings on edits, cloud-backed diff review on Stop, and agentic commit/push review with SHA tracking. All logic runs in the cross-platform qodersec binary.",
   "author": {

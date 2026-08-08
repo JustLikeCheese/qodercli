@@ -88,9 +88,14 @@ echo "[bootstrap] ${DOWNLOAD_URL}"
 
 mkdir -p "${BIN_DIR}" 2>/dev/null
 
-# Download
-TMPFILE="$(mktemp "${TMPDIR:-/tmp}/qodersec-XXXXXX.tar.gz")"
+# Download. Keep the random Xs at the END of the template: BSD mktemp (macOS)
+# only substitutes a trailing run of Xs, so a ".tar.gz" suffix would create a
+# literal fixed file and fail with "File exists" on the next run. tar does not
+# need the extension.
+TMPFILE="$(mktemp "${TMPDIR:-/tmp}/qodersec-XXXXXX")"
+echo "[bootstrap] TMPFILE: ${TMPFILE}"
 trap 'rm -f "${TMPFILE}"' EXIT
+
 
 if command -v curl >/dev/null 2>&1; then
     curl -fsSL -o "${TMPFILE}" "${DOWNLOAD_URL}" || { echo "[bootstrap] download failed" >&2; exit 1; }

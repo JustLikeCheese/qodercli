@@ -1,7 +1,12 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 REM Minimal Windows bootstrap: download one Qoder-style ZIP and install its executable.
-REM Runtime dependency: built-in Windows PowerShell only.
+REM Runtime dependencies: built-in Windows PowerShell (download) + System32\tar.exe
+REM (preferred extractor). Enterprise ConstrainedLanguage mode blocks Expand-Archive
+REM method invocation, so extraction prefers tar.exe; Invoke-WebRequest is a plain
+REM cmdlet and keeps working there. On old/stripped Windows without tar.exe we fall
+REM back to Expand-Archive (works under FullLanguage). Download / extract / verify
+REM are separate steps with distinct error messages.
 
 if defined QODERSEC_HOME goto use_qodersec_home
 if defined CODESEC_HOME goto use_codesec_home
@@ -51,9 +56,35 @@ rmdir /s /q "%EXTRACT_DIR%" >nul 2>nul
 echo [bootstrap] Downloading %QODERSEC_DOWNLOAD_URL%
 set "POWERSHELL_EXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 if not exist "%POWERSHELL_EXE%" set "POWERSHELL_EXE=powershell.exe"
-"%POWERSHELL_EXE%" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri $env:QODERSEC_DOWNLOAD_URL -OutFile $env:QODERSEC_DOWNLOAD_OUT; Expand-Archive -LiteralPath $env:QODERSEC_DOWNLOAD_OUT -DestinationPath $env:QODERSEC_EXTRACT_DIR -Force; Unblock-File -LiteralPath (Join-Path $env:QODERSEC_EXTRACT_DIR 'codesec-cli.exe') -ErrorAction SilentlyContinue"
+REM Step 1: download. Invoke-WebRequest is ConstrainedLanguage-safe (confirmed in
+REM feedback 4bc07021: the download succeeded there, only Expand-Archive failed).
+"%POWERSHELL_EXE%" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri $env:QODERSEC_DOWNLOAD_URL -OutFile $env:QODERSEC_DOWNLOAD_OUT"
 if errorlevel 1 goto download_failed
-if not exist "%EXTRACTED%" goto download_failed
+if not exist "%DOWNLOAD%" goto download_failed
+
+REM Step 2: extract. Prefer System32 tar.exe (works under ConstrainedLanguage);
+REM without tar.exe (old/stripped Windows) fall back to Expand-Archive, which
+REM still works under FullLanguage. Either path failing reports extraction failed.
+mkdir "%EXTRACT_DIR%" >nul 2>nul
+if not exist "%EXTRACT_DIR%\." goto extraction_failed
+set "TAR_EXE=%SystemRoot%\System32\tar.exe"
+if not exist "%TAR_EXE%" goto ps_extract
+echo [bootstrap] Extracting with %TAR_EXE%
+"%TAR_EXE%" -xf "%DOWNLOAD%" -C "%EXTRACT_DIR%"
+if errorlevel 1 goto extraction_failed
+if not exist "%EXTRACTED%" goto extraction_failed
+goto extract_done
+
+:ps_extract
+echo [bootstrap] tar.exe not found; falling back to PowerShell Expand-Archive
+"%POWERSHELL_EXE%" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Expand-Archive -LiteralPath $env:QODERSEC_DOWNLOAD_OUT -DestinationPath $env:QODERSEC_EXTRACT_DIR -Force"
+if errorlevel 1 goto extraction_failed
+if not exist "%EXTRACTED%" goto extraction_failed
+
+:extract_done
+
+REM Step 3: best-effort Mark-of-the-Web unblock; never fails the install.
+"%POWERSHELL_EXE%" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Unblock-File -LiteralPath (Join-Path $env:QODERSEC_EXTRACT_DIR 'codesec-cli.exe') -ErrorAction SilentlyContinue" >nul 2>nul
 
 echo [bootstrap] Verifying %EXTRACTED%
 "%EXTRACTED%" version
@@ -79,6 +110,12 @@ exit /b 0
 del /q "%DOWNLOAD%" >nul 2>nul
 rmdir /s /q "%EXTRACT_DIR%" >nul 2>nul
 echo [bootstrap] ERROR: download failed >&2
+exit /b 1
+
+:extraction_failed
+del /q "%DOWNLOAD%" >nul 2>nul
+rmdir /s /q "%EXTRACT_DIR%" >nul 2>nul
+echo [bootstrap] ERROR: extraction failed >&2
 exit /b 1
 
 :verification_failed

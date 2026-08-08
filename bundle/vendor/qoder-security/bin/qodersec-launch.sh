@@ -8,14 +8,14 @@ export QODER_PLUGIN_ROOT="$PLUGIN_ROOT"
 export CODESEC_LOG_NAME="qodersec"
 
 # Pinned dependency versions (updated when plugin is published).
-export QODERSEC_CLI_VERSION_GLOBAL="0.8.6"
-export QODERSEC_CLI_VERSION_CN="0.8.6"
-export CODESEC_CLI_VERSION_GLOBAL="0.8.6"
-export CODESEC_CLI_VERSION_CN="0.8.6"
-export QODERCLI_VERSION_GLOBAL="1.1.12"
-export QODERCLI_VERSION_CN="1.1.12"
-export QODERCLI_MANIFEST_URL_GLOBAL="https://download.qoder.com/qodercli/channels/1.1.12/manifest.json"
-export QODERCLI_MANIFEST_URL_CN="https://static.qoder.com.cn/qoder-cli-cn/channels/1.1.12/manifest.json"
+export QODERSEC_CLI_VERSION_GLOBAL="0.8.8"
+export QODERSEC_CLI_VERSION_CN="0.8.8"
+export CODESEC_CLI_VERSION_GLOBAL="0.8.8"
+export CODESEC_CLI_VERSION_CN="0.8.8"
+export QODERCLI_VERSION_GLOBAL="1.1.13"
+export QODERCLI_VERSION_CN="1.1.13"
+export QODERCLI_MANIFEST_URL_GLOBAL="https://download.qoder.com/qodercli/channels/1.1.13/manifest.json"
+export QODERCLI_MANIFEST_URL_CN="https://static.qoder.com.cn/qoder-cli-cn/channels/1.1.13/manifest.json"
 
 # Hooks may run with a minimal PATH; add the usual install directories.
 export PATH="$HOME/.qodersec/bin:$HOME/.local/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"

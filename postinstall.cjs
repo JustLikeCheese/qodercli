@@ -38,6 +38,46 @@ if (process.platform === 'win32') {
   }
 }
 
+// --- Dispatcher + PATH configuration (all platforms) ---
+// `qoder` should resolve to the entry-point dispatcher rather than the npm
+// shim so multi-channel users (npm + IDE) get consistent routing. We invoke
+// the freshly-installed CLI's hidden `configure-path` subcommand which
+// writes `~/.qoder/entry/<brand>` and prepends the entry dir onto PATH.
+//
+// Brand-neutral: we read the CLI bin path from the package's own
+// package.json `bin` field so the same script handles Global (qodercli) and
+// CN (qoderclicn) without publish-time sed rendering.
+try {
+  configurePathBestEffort();
+} catch {
+  // Never break npm install
+}
+
+function configurePathBestEffort() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const { spawnSync } = require('node:child_process');
+
+  const pkgJsonPath = path.resolve(__dirname, 'package.json');
+  if (!fs.existsSync(pkgJsonPath)) return;
+
+  const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
+  const bins = pkgJson.bin || {};
+  const cliBinName = ['qodercli', 'qoderclicn'].find((name) => bins[name]);
+  if (!cliBinName) return;
+
+  const cliPath = path.resolve(__dirname, bins[cliBinName]);
+  if (!fs.existsSync(cliPath)) return;
+
+  // Run synchronously so the install banner reflects post-config state.
+  // stdio: 'inherit' is fine here — the CLI's configure-path command always
+  // returns exit code 0, and its stdout banner is the user-facing signal.
+  spawnSync(process.execPath, [cliPath, 'configure-path'], {
+    stdio: 'inherit',
+    timeout: 30_000,
+  });
+}
+
 function warnIfRipgrepUnavailable() {
   const { execFileSync } = require('node:child_process');
   const { readFileSync } = require('node:fs');
