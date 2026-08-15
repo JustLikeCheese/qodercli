@@ -7,7 +7,14 @@
 const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const { accessSync, constants, existsSync, statSync } = fs;
-const { isAbsolute, join, relative, resolve, sep } = require('node:path');
+const {
+  delimiter,
+  isAbsolute,
+  join,
+  relative,
+  resolve,
+  sep,
+} = require('node:path');
 const os = require('node:os');
 
 const args = process.argv.slice(2);
@@ -191,7 +198,37 @@ function findWindowsIde() {
   return null;
 }
 
+function findRemoteIde() {
+  // VS Code-compatible remote terminals bind the injected remote CLI to the
+  // active IDE session through this IPC handle. Requiring both the handle and
+  // a PATH directory named remote-cli leaves local discovery unchanged.
+  if (!process.env.VSCODE_IPC_HOOK_CLI) return null;
+
+  const commandNames = [
+    'qoder',
+    'qoder',
+  ];
+  const extensions =
+    process.platform === 'win32' ? ['.cmd', '', '.exe', '.bat'] : [''];
+
+  for (const dir of (process.env.PATH || '').split(delimiter).filter(Boolean)) {
+    if (!/(^|[\\/])remote-cli[\\/]*$/i.test(dir)) continue;
+    for (const name of commandNames) {
+      for (const extension of extensions) {
+        const launcher = findIdeLauncher([join(dir, name + extension)]);
+        if (launcher) return launcher;
+      }
+    }
+  }
+  return null;
+}
+
 function findIde() {
+  // The remote launcher is tied to the current IDE session and must take
+  // precedence over a machine-local IDE installation.
+  const remoteIde = findRemoteIde();
+  if (remoteIde) return remoteIde;
+
   if (process.platform === 'darwin') {
     return findMacIde();
   }
