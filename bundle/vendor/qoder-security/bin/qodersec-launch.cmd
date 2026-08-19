@@ -24,10 +24,10 @@ REM Tell the Go binary to use qodersec-specific naming (log file, etc.)
 set "CODESEC_LOG_NAME=qodersec"
 REM Pinned dependency versions (updated when plugin is published)
 REM Set both QODERSEC_* and CODESEC_* for Go binary compatibility
-set "QODERSEC_CLI_VERSION_GLOBAL=0.8.8"
-set "QODERSEC_CLI_VERSION_CN=0.8.8"
-set "CODESEC_CLI_VERSION_GLOBAL=0.8.8"
-set "CODESEC_CLI_VERSION_CN=0.8.8"
+set "QODERSEC_CLI_VERSION_GLOBAL=0.8.9"
+set "QODERSEC_CLI_VERSION_CN=0.8.9"
+set "CODESEC_CLI_VERSION_GLOBAL=0.8.9"
+set "CODESEC_CLI_VERSION_CN=0.8.9"
 set "QODERCLI_VERSION_GLOBAL=1.1.13"
 set "QODERCLI_VERSION_CN=1.1.13"
 set "QODERCLI_MANIFEST_URL_GLOBAL=https://download.qoder.com/qodercli/channels/1.1.13/manifest.json"

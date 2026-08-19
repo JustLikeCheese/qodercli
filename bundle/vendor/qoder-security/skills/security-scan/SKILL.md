@@ -50,7 +50,7 @@ The runner or launcher must inject `QODER_PLUGIN_ROOT` as an absolute path to th
 
 Invoke the selected entry point silently and consume only its normalized JSON fields: `status`, `host`, `l2_enabled`, and `l3_enabled`. Only a literal normalized `true` enables a layer. If execution fails, output is invalid, or a field is absent, treat both layers as disabled.
 
-The settings entry points are the only exception to the direct-binary rule because they own launcher/bootstrap. Never independently inspect `QODER_CLI`, `QODERCN_CLI`, `QODER_IDE`, or `QODER_CN_IDE`; never construct or probe a Qoder settings path; never read or decode `settings.json` or `app-config.json`; and never use `jq`, Python, Node.js, regular expressions, or another fallback parser.
+The settings entry points are the only exception to the direct-binary rule because they own launcher/bootstrap. Never independently inspect `QODER_CLI`, `QODERCN_CLI`, `QODER_IDE`, `QODER_CN_IDE`, `QODER_AGENT_SDK_ENTRYPOINT`, or `QODER_SECURITY_SCAN_SETTINGS_JSON`; never construct or probe a Qoder settings path; never read or decode `settings.json` or `app-config.json`; and never use `jq`, Python, Node.js, regular expressions, or another fallback parser.
 
 For an explicit request or picker selection whose layer is disabled:
 
@@ -62,6 +62,9 @@ For an explicit request or picker selection whose layer is disabled:
   - If `host` is `qoder_cli` or `qodercn_cli`, use the CLI guidance:
     - English: "Run `/security-settings` to configure"
     - Chinese: "请执行 `/security-settings` 开启配置"
+  - If `host` is `qoder_sdk`, use the SDK guidance:
+    - English: "Enable the requested mode in the Qoder Agent SDK's `securityScan` (TypeScript) or `security_scan` (Python) options"
+    - Chinese: "请在 Qoder Agent SDK 的 `securityScan`（TypeScript）或 `security_scan`（Python）选项中开启所请求的模式"
   - If `host` is absent or unrecognized, use the CLI guidance.
 
 For an implicit handoff with L3 deep disabled, do nothing security-related: do not prompt or remind the user, and do not mention the disabled setting. Continue the original handoff.

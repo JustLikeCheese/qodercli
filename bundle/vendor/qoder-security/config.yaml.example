@@ -11,11 +11,12 @@ hook_debug: false
 # Product defaults for direct qodersec commands used by the Qoder skill.
 # These keep user-facing commands short while preserving the underlying CLI
 # routing contract. Explicit command-line flags still override these values.
+# Note: scan.auth is deprecated (transport is decided by platform); a legacy
+# `auth: qoder` entry is still interpreted as `platform: qoder` for upgrades.
 qodersec:
   defaults:
     scan:
-      auth: qoder
-      platform: custom
+      platform: qoder
       all_when_no_target: true
     review:
       platform: qoder
