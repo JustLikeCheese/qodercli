@@ -234,6 +234,8 @@ function findIde() {
   }
   if (process.platform === 'linux') {
     return findIdeLauncher([
+      '/usr/share/qoder-ide/bin/code',
+      '/usr/share/qoder-ide/bin/qoder',
       '/usr/share/qoder/bin/code',
       '/usr/share/qoder/bin/qoder',
     ]);
