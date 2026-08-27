@@ -20,20 +20,6 @@ AI 编程助手，将强大的 AI 编程能力直接带入你的终端。
 npm install -g @qoder-ai/qodercli
 ```
 
-## 📋 发布渠道
-
-### Stable（稳定版）
-
-```sh
-npm install -g @qoder-ai/qodercli@latest
-```
-
-### Node原生兼容版（beta）
-
-```sh
-npm install -g @qoder-ai/qodercli@beta
-```
-
 ## 🚀 快速开始
 
 ### 基本用法

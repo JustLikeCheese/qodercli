@@ -209,6 +209,7 @@ message ContextMetadata {
   string request_set_id = 4;
   string machine_id = 5;
   string client_type = 6;
+  string source_session_id = 7;
 }
 
 // User metadata
