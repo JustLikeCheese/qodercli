@@ -50,6 +50,8 @@ The runner or launcher must inject `QODER_PLUGIN_ROOT` as an absolute path to th
 
 Invoke the selected entry point silently and consume only its normalized JSON fields: `status`, `host`, `l2_enabled`, and `l3_enabled`. Only a literal normalized `true` enables a layer. If execution fails, output is invalid, or a field is absent, treat both layers as disabled.
 
+A `status` of `initializing`, or no output at all, means Qoder Security is still downloading its components — not that a layer is switched off. In that state never run a review and never point the user at the settings page. For an explicit request or picker selection, tell the user that Qoder Security is still initializing and ask them to try again in about a minute. For an implicit handoff, stay silent about security and continue the handoff.
+
 The settings entry points are the only exception to the direct-binary rule because they own launcher/bootstrap. Never independently inspect `QODER_CLI`, `QODERCN_CLI`, `QODER_IDE`, `QODER_CN_IDE`, `QODER_AGENT_SDK_ENTRYPOINT`, or `QODER_SECURITY_SCAN_SETTINGS_JSON`; never construct or probe a Qoder settings path; never read or decode `settings.json` or `app-config.json`; and never use `jq`, Python, Node.js, regular expressions, or another fallback parser.
 
 For an explicit request or picker selection whose layer is disabled:
@@ -71,7 +73,7 @@ For an implicit handoff with L3 deep disabled, do nothing security-related: do n
 
 ## Shared execution and result invariants
 
-Choose the binary from main-host OS information. Do not read `runtime.json` or probe files to decide the binary name:
+Choose the binary from main-host OS information. Do not probe files or read manifests to decide the binary name:
 
 - Windows uses `~/.qodersec/bin/qodersec.exe`.
 - macOS or Linux uses `~/.qodersec/bin/qodersec`.
@@ -80,7 +82,9 @@ Invoke scan and review commands directly. Do not invoke `qodersec-launch.cmd`, `
 
 Keep all execution quiet. Do not expose qodersec commands, launcher commands, stdout/stderr, JSON, identifiers, statistics, skipped-file metadata, logs, environment details, or internal mechanics. Do not narrate internal routing or planning. Use tool output only to present actual issues/findings or make the specified routing decision. Never interpret, add to, or fabricate a finding.
 
-For a missing or non-executable direct qodersec binary, tell the user that Qoder Security is still initializing and ask them to wait a moment, then retry. Do not ask them to restart Qoder/qodercli or run `/clear`. Invalid user arguments may still be reported as invocation errors.
+The single exception to the identifier rule is the asynchronous cloud scan handoff: `report_url`, `project_id`, `scan_id`, and `task_name` from the scan command's JSON output may be shown to the user exactly as described in the project/file cloud scan workflow. Everything else in that output, and all other stdout/stderr, logs, and internal mechanics, stays hidden.
+
+For a missing or non-executable direct qodersec binary, or when a review command fails because Qoder Security is still installing its dependencies, tell the user that Qoder Security is still initializing and ask them to try again in about a minute. Do not present it as a disabled setting, do not claim that no security issues were found, and do not ask them to restart Qoder/qodercli or run `/clear`. Invalid user arguments may still be reported as invocation errors.
 
 The only user-actionable internal notice that may be surfaced is a structured qodersec JSON `notice` with `code` equal to `qoder_credits_exhausted`. If this notice appears, do not say that no security issues were found. Tell the user exactly: "You've run out of Credits, so code security scanning is unavailable. Upgrade your plan or buy an add-on pack to continue." If `notice.pricing_url` is present, include that billing link. Do not expose any other qodersec stdout/stderr, logs, raw SDK errors, identifiers, or scan statistics.
 
@@ -88,7 +92,7 @@ The only user-actionable internal notice that may be surfaced is a structured qo
 
 Use current Qoder login authentication; no AK/SK is needed.
 
-Project/file cloud scans can take several minutes, especially for directories or whole-repository scope. When invoking the command through a tool that supports a timeout, set a long timeout of at least 1800 seconds. Do not wrap the scan in a shorter timeout, do not kill it only because it is quiet, do not retry while the first scan is still running, and do not automatically retry if the scan fails.
+Project/file cloud scans are asynchronous: the command uploads the code, creates the scan task, prints its JSON handoff, and exits immediately. Do not wait for results, do not poll, do not run the scan again for the same scope, and do not automatically retry a failed scan.
 
 For a full scan:
 
@@ -116,11 +120,17 @@ macOS or Linux:
 
 Do not add `--diff`, `--all`, inferred files, or neighboring paths to a targeted scan. If scope is still ambiguous, ask instead of guessing.
 
-### Mandatory scan-size gate
+### Asynchronous result handoff
 
-The qodersec binary counts the code lines for the selected scope. Do not count lines independently. If it reports `scan size limit exceeded`, the requested scope exceeds the 10,000-line gate. Tell the user: "Scanning at this scale is not supported at this time. The current limit is 10,000 code lines." Do not retry, split, or reduce the scope automatically.
+On success the command prints a JSON object on stdout. Read `report_url`, `project_id`, `scan_id`, and `task_name` from it and present them to the user in plain product language:
 
-On success with no issues, simply state that no security issues were found. On issues, follow the shared result handling requirements below. Cloud scan issues must include severity, category/CWE or OWASP (when available), title, file and line, vulnerable code snippet, description, and remediation suggestion.
+- The report link (`report_url`), so the user can open the result later.
+- The project ID (`project_id`) and the scan task ID (`scan_id`), plus the task name (`task_name`) when it helps identify the run.
+- A clear statement that the scan keeps running in the cloud and that the user should check the result later through that link.
+
+If `report_url` is absent or empty, present only the project ID and the scan task ID and tell the user to look the result up later in the Qoder Security console.
+
+Cloud scans never return issues inline, so this workflow has no no-issues statement, no issue list, and no remediation gate. Do not claim that the code is clean or that no security issues were found.
 
 ## Explicit L2 lightweight review workflow
 
@@ -175,9 +185,11 @@ If a handoff progress update is necessary before the commit, use plain product l
 
 ## Mandatory issues/findings-first remediation gate
 
-For every mode, issues/findings must be visible before the fix decision. The remediation question is not a substitute for the issues/findings summary.
+This gate applies to the manual L2 lightweight and L3 deep review modes only; asynchronous cloud scans return no inline findings and never enter it.
 
-Before the remediation question, present every reported issue or finding. Manual L2 lightweight/L3 deep findings must include severity, category and CWE (when available), file and line, description, vulnerable code snippet, remediation suggestion, and data flow summary (when available). Cloud scan issue fields are defined in the project/file cloud scan workflow.
+For both review modes, findings must be visible before the fix decision. The remediation question is not a substitute for the findings summary.
+
+Before the remediation question, present every reported finding. Manual L2 lightweight/L3 deep findings must include severity, category and CWE (when available), file and line, description, vulnerable code snippet, remediation suggestion, and data flow summary (when available).
 
 After presenting all required details, enter `AWAITING_REMEDIATION_DECISION`. The next model action must be an `AskUserQuestion` tool call whose first question object includes a `question` field with this exact value:
 

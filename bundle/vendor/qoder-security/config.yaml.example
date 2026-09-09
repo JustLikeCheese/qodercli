@@ -13,14 +13,13 @@ hook_debug: false
 # routing contract. Explicit command-line flags still override these values.
 # Note: scan.auth is deprecated (transport is decided by platform); a legacy
 # `auth: qoder` entry is still interpreted as `platform: qoder` for upgrades.
+# Note: review has no defaults here; its platform is inferred from the binary
+# name and its mode/layer come from the command (`qodersec review l2|l3`).
 qodersec:
   defaults:
     scan:
       platform: qoder
       all_when_no_target: true
-    review:
-      platform: qoder
-      mode: manual
 
 # File filters shared by scan and review.
 # Built-in defaults are used when this section is omitted; configured values replace defaults.
@@ -130,8 +129,21 @@ review:
   # L2/L3 manual skills spawn an inner qodercli through the Go SDK.
   # The default Qoder plugin does not register Stop or Bash commit/push hooks;
   # those legacy hook-mode settings are intentionally omitted from this example.
-  # Manual review protections remain active through review.previous_findings_ttl_secs,
-  # review.shared.*, and review.qoder_sdk.*.
+  # Manual review protections remain active through review.previous_findings_ttl_secs
+  # and review.shared.*. The SDK transport itself is configured under the top-level
+  # `transport:` root (see the end of this file): both review (L1-L3) and
+  # `scan --platform qoder` (L4) drive it, so it is not a review-only setting.
+
+# ---------------------------------------------------------------------------
+# Shared qodercli SDK transport.
+# ---------------------------------------------------------------------------
+# Driven by BOTH review (L1-L3) and `scan --platform qoder` (L4), so it lives
+# under a command-neutral root rather than under `review:`.
+#
+# The legacy location `review.qoder_sdk` is still read for config files written
+# before this move, so existing deployments keep working unchanged. If both are
+# present, `transport:` wins wholesale (no partial merge across the two).
+transport:
   qoder_sdk:
     # cli_path: ""                 # Explicit qodercli path. Empty means auto-discover qodercli/qoderclicn.
 

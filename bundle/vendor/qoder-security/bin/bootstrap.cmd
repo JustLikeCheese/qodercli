@@ -58,7 +58,9 @@ set "POWERSHELL_EXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 if not exist "%POWERSHELL_EXE%" set "POWERSHELL_EXE=powershell.exe"
 REM Step 1: download. Invoke-WebRequest is ConstrainedLanguage-safe (confirmed in
 REM feedback 4bc07021: the download succeeded there, only Expand-Archive failed).
-"%POWERSHELL_EXE%" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri $env:QODERSEC_DOWNLOAD_URL -OutFile $env:QODERSEC_DOWNLOAD_OUT"
+REM -TimeoutSec bounds it: the background updater holds the update lock for the
+REM whole run, so a stalled connection would otherwise park it there.
+"%POWERSHELL_EXE%" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -TimeoutSec 900 -Uri $env:QODERSEC_DOWNLOAD_URL -OutFile $env:QODERSEC_DOWNLOAD_OUT"
 if errorlevel 1 goto download_failed
 if not exist "%DOWNLOAD%" goto download_failed
 

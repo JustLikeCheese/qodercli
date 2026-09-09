@@ -88,31 +88,42 @@ echo "[bootstrap] ${DOWNLOAD_URL}"
 
 mkdir -p "${BIN_DIR}" 2>/dev/null
 
+# Stage inside BIN_DIR so installing is an atomic same-filesystem rename. A
+# review started before the update keeps running off its own inode; extracting
+# straight into BIN_DIR would rewrite the executable underneath it (ETXTBSY on
+# Linux, a truncated image on macOS) — and updates now also get triggered from
+# the PostToolUse path, so that overlap is no longer hypothetical.
+STAGE_DIR="${BIN_DIR}/.qodersec-download.$$"
+rm -rf "${STAGE_DIR}"
+mkdir -p "${STAGE_DIR}" || { echo "[bootstrap] cannot create ${STAGE_DIR}" >&2; exit 1; }
+
 # Download. Keep the random Xs at the END of the template: BSD mktemp (macOS)
 # only substitutes a trailing run of Xs, so a ".tar.gz" suffix would create a
 # literal fixed file and fail with "File exists" on the next run. tar does not
 # need the extension.
 TMPFILE="$(mktemp "${TMPDIR:-/tmp}/qodersec-XXXXXX")"
 echo "[bootstrap] TMPFILE: ${TMPFILE}"
-trap 'rm -f "${TMPFILE}"' EXIT
+trap 'rm -rf "${TMPFILE}" "${STAGE_DIR}"' EXIT
 
-
+# Every download is bounded: the background updater holds the update lock for
+# the whole run, so a stalled connection would otherwise park it there.
 if command -v curl >/dev/null 2>&1; then
-    curl -fsSL -o "${TMPFILE}" "${DOWNLOAD_URL}" || { echo "[bootstrap] download failed" >&2; exit 1; }
+    curl -fsSL --connect-timeout 10 --max-time 900 -o "${TMPFILE}" "${DOWNLOAD_URL}" || { echo "[bootstrap] download failed" >&2; exit 1; }
 elif command -v wget >/dev/null 2>&1; then
-    wget -qO "${TMPFILE}" "${DOWNLOAD_URL}" || { echo "[bootstrap] download failed" >&2; exit 1; }
+    wget --timeout=30 --tries=1 -qO "${TMPFILE}" "${DOWNLOAD_URL}" || { echo "[bootstrap] download failed" >&2; exit 1; }
 else
     echo "[bootstrap] curl or wget required" >&2; exit 1
 fi
 
 # Extract — OSS package contains codesec-cli binary, rename to qodersec
-tar xzf "${TMPFILE}" -C "${BIN_DIR}" 2>/dev/null || tar xzf "${TMPFILE}" --strip-components=1 -C "${BIN_DIR}" 2>/dev/null || { echo "[bootstrap] extraction failed" >&2; exit 1; }
+tar xzf "${TMPFILE}" -C "${STAGE_DIR}" 2>/dev/null || tar xzf "${TMPFILE}" --strip-components=1 -C "${STAGE_DIR}" 2>/dev/null || { echo "[bootstrap] extraction failed" >&2; exit 1; }
 
-# Rename: OSS package ships codesec-cli, we rename to qodersec on disk
-if [ -f "${BIN_DIR}/codesec-cli" ]; then
-    mv "${BIN_DIR}/codesec-cli" "${BIN_DIR}/qodersec"
-fi
-chmod +x "${QODERSEC_BIN}" 2>/dev/null
+# Install: OSS package ships codesec-cli, the on-disk name is qodersec.
+STAGED_BIN="${STAGE_DIR}/codesec-cli"
+[ -f "${STAGED_BIN}" ] || STAGED_BIN="${STAGE_DIR}/${BINARY_NAME}"
+[ -f "${STAGED_BIN}" ] || { echo "[bootstrap] extraction produced no binary" >&2; exit 1; }
+chmod +x "${STAGED_BIN}" 2>/dev/null
+mv -f "${STAGED_BIN}" "${QODERSEC_BIN}" || { echo "[bootstrap] cannot install ${QODERSEC_BIN}" >&2; exit 1; }
 
 # Write version.json (format matches ensure-deps)
 CHANNEL="global"

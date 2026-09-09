@@ -6,7 +6,8 @@
           {
             "type": "command",
             "command": "\"${QODER_PLUGIN_ROOT}/bin/qodersec-launch.cmd\" ensure-deps --hook-event SessionStart",
-            "timeout": 120
+            "timeout": 15,
+            "async": true
           }
         ]
       }
