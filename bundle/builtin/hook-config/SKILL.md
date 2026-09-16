@@ -147,6 +147,7 @@ The hook script must `exit 2` (and write its diagnostic to `stderr` /
 | `SubagentStop`  | Sub-agent session ends                                        |
 | `TeammateIdle`  | Teammate attempts to become idle                              |
 | `Stop`          | Agent decides to stop                                         |
+| `QueryEnd`      | Top-level request reaches its final outcome (notification-only) |
 | `StopFailure`   | Agent encounters fatal error and must stop (notification-only) |
 | `PreCompact`    | Before context compaction                                     |
 | `PostCompact`   | After context compaction                                      |
