@@ -1,0 +1,13 @@
+{
+  "version": "0.1.0",
+  "revision": "828c366361c14125956cd4a48820e6ab0317ad91",
+  "sourceDirty": false,
+  "target": "universal",
+  "runtime": "host",
+  "archive": "sites.zip",
+  "size": 840593,
+  "sha256": "5751bf07de10c632834c2a96d5a6817d9d65c815d1e6bcadcf5877d6d5e6a51c",
+  "minimumNodeVersion": "22.12.0",
+  "packageLockSha256": "d56813b8ec8a9782864f658fe9c780bbe086c54e4f27fd3c1be1dba476e220c7",
+  "packaging": "qodercli-host-runtime-v2"
+}
