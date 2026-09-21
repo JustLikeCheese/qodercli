@@ -17,10 +17,20 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${QODER_PLUGIN_ROOT}/bin/qodersec-launch.cmd\" review --platform=qoder"
+            "command": "\"${QODER_PLUGIN_ROOT}/bin/qodersec-launch.cmd\" review --platform=qoder --mode=hook --layer=l1"
           }
         ],
         "matcher": "Edit|Write|MultiEdit|NotebookEdit"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${QODER_PLUGIN_ROOT}/bin/qodersec-launch.cmd\" review --platform=qoder --mode=hook --layer=l3",
+            "if": "Bash(git push *)"
+          }
+        ],
+        "matcher": "Bash"
       }
     ],
     "Stop": []

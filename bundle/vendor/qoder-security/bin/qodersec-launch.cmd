@@ -29,10 +29,10 @@ REM Tell the Go binary to use qodersec-specific naming (log file, etc.)
 set "CODESEC_LOG_NAME=qodersec"
 REM Pinned dependency versions (updated when plugin is published)
 REM Set both QODERSEC_* and CODESEC_* for Go binary compatibility
-set "QODERSEC_CLI_VERSION_GLOBAL=0.9.0"
-set "QODERSEC_CLI_VERSION_CN=0.9.0"
-set "CODESEC_CLI_VERSION_GLOBAL=0.9.0"
-set "CODESEC_CLI_VERSION_CN=0.9.0"
+set "QODERSEC_CLI_VERSION_GLOBAL=0.9.2"
+set "QODERSEC_CLI_VERSION_CN=0.9.2"
+set "CODESEC_CLI_VERSION_GLOBAL=0.9.2"
+set "CODESEC_CLI_VERSION_CN=0.9.2"
 set "QODERCLI_VERSION_GLOBAL=1.1.41"
 set "QODERCLI_VERSION_CN=1.1.41"
 set "QODERCLI_MANIFEST_URL_GLOBAL=https://download.qoder.com/qodercli/channels/1.1.41/manifest.json"
@@ -237,15 +237,45 @@ REM The updater must not re-derive the target: passing it down is what keeps a
 REM local-test exemption (which rewrites TARGET_CLI_VERSION above) effective.
 set "QODERSEC_UPDATE_TARGET_VERSION=%TARGET_CLI_VERSION%"
 set "QODERSEC_UPDATER_PATH=%BIN_DIR%qodersec-update.cmd"
+REM Naming the interpreter is not a style choice. Handing a .cmd to ShellExecute
+REM (Start-Process without -ArgumentList, or START on a non-executable) resolves
+REM it through the machine's .cmd association, and an environment where that
+REM association points at a browser opens a tab instead of updating - on every
+REM single hook, forever, because a non-running updater never writes the lock or
+REM the cooldown that would stop the retry. So cmd.exe is spelled out here the
+REM same way the Unix launcher spells out `sh`. /d skips AutoRun; the doubled
+REM quotes are the idiom that survives a path with spaces - cmd.exe drops the
+REM outermost pair and is left with exactly one quoted command.
+set "QODERSEC_COMSPEC=%ComSpec%"
+if not defined QODERSEC_COMSPEC set "QODERSEC_COMSPEC=%SystemRoot%\System32\cmd.exe"
+set "QODERSEC_UPDATER_ARGS=/d /c ""%QODERSEC_UPDATER_PATH%"""
 if "%QODERSEC_UPDATE_SYNC%"=="1" goto trigger_sync
 REM Start-Process is a plain cmdlet (ConstrainedLanguage-safe) and detaches the
-REM updater without a console window; the path travels via env so no quoting.
-"%POWERSHELL_EXE%" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Start-Process -FilePath $env:QODERSEC_UPDATER_PATH -WindowStyle Hidden" >nul 2>nul
+REM updater without a console window; both the program and its argument string
+REM travel via env so nothing needs quoting inside the -Command text. -PassThru
+REM turns "a child process actually exists" into an exit code, which is the only
+REM spawn confirmation available without polling the lock and taxing every edit.
+"%POWERSHELL_EXE%" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "try { $p = Start-Process -FilePath $env:QODERSEC_COMSPEC -ArgumentList $env:QODERSEC_UPDATER_ARGS -WindowStyle Hidden -PassThru -ErrorAction Stop } catch { exit 1 }; if ($p) { exit 0 }; exit 1" >nul 2>nul
 if not errorlevel 1 goto trigger_spawned
-start "" /b "%QODERSEC_UPDATER_PATH%" >nul 2>nul
+REM PowerShell missing or locked down: cmd's own START, still pointed at cmd.exe
+REM rather than at the .cmd, so the association plays no part here either. START
+REM reports a launch failure through ERRORLEVEL but is not guaranteed to clear
+REM the non-zero one PowerShell just left, so reset it before asking.
+ver >nul
+start "" /b "%QODERSEC_COMSPEC%" %QODERSEC_UPDATER_ARGS% >nul 2>nul
+if errorlevel 1 goto trigger_spawn_failed
 :trigger_spawned
 >> "%_QODERSEC_LOG%" echo [%DATE% %TIME%] [launcher] async update spawned bin=%NEED_BIN% config=%NEED_CONFIG% qodercli=%NEED_QODERCLI% current=%INSTALLED_CLI_VERSION% target=%TARGET_CLI_VERSION%
 exit /b 0
+
+REM Nobody is going to write the lock or the cooldown for us, so a spawn that
+REM never started has to arm the cooldown itself - otherwise the next PostToolUse
+REM repeats the same failing attempt, and the one after that, on every edit.
+:trigger_spawn_failed
+if not exist "%STATE_DIR%" mkdir "%STATE_DIR%" >nul 2>nul
+> "%COOLDOWN_FILE%" echo %DATE% %TIME%
+>> "%_QODERSEC_LOG%" echo [%DATE% %TIME%] [launcher] update spawn failed; cooldown armed for %UPDATE_COOLDOWN_MINUTES%m target=%TARGET_CLI_VERSION%
+exit /b 1
 
 :trigger_sync
 >> "%_QODERSEC_LOG%" echo [%DATE% %TIME%] [launcher] sync update requested bin=%NEED_BIN% config=%NEED_CONFIG% qodercli=%NEED_QODERCLI% current=%INSTALLED_CLI_VERSION% target=%TARGET_CLI_VERSION%

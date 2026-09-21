@@ -1,9 +1,9 @@
 ---
-description: "Qoder security scanning. Use when the user invokes /security-scan, explicitly requests a full repository or named-path cloud scan, asks for an L2 lightweight or L3 deep security review, or asks to push, git push, push it, publish commits, open a PR/MR, merge, release, deploy, configure a remote for push, or otherwise hand off committed code where an enabled L3 deep review must be offered first. Respect the Qoder L2 lightweight/L3 deep product switches. Never infer remediation approval from an earlier scan or handoff request."
+description: "Qoder security scanning. Use when the user invokes /security-scan, explicitly requests a full repository or named-path cloud scan, asks whether a previously submitted cloud scan has finished or supplies a project name plus task/scan ID to fetch its result, asks for an L2 lightweight or L3 deep security review, or asks to push, git push, push it, publish commits, open a PR/MR, merge, release, deploy, configure a remote for push, or otherwise hand off committed code where an enabled L3 deep review must be offered first. Respect the Qoder L2 lightweight/L3 deep product switches. Never infer remediation approval from an earlier scan or handoff request."
 name: security-scan
 ---
 
-Route security intent to exactly one of three isolated workflows: project/file cloud scan, L2 lightweight review, or L3 deep review. Keep all qodersec execution private and preserve the decision boundaries below.
+Route security intent to exactly one of four isolated workflows: project/file cloud scan, asynchronous cloud scan result query, L2 lightweight review, or L3 deep review. Keep all qodersec execution private and preserve the decision boundaries below.
 
 ## Route explicit intent first
 
@@ -13,14 +13,15 @@ Use the first matching route. Do not show the fixed mode picker when the user ha
    - **Run L2 lightweight/L3 deep review** — ignore the named paths and review the layer's normal change set.
    - **Scan the specified paths** — run the project/file cloud scan for exactly the named paths.
 
-1. An explicit full, all-project, whole-repository, or broad scan uses the project/file cloud scan with `--all`.
-2. One or more explicit file or directory targets use the project/file cloud scan for exactly those targets.
-3. An explicit lightweight or L2 lightweight request uses the explicit L2 lightweight gate.
-4. An explicit deep, commit-range, committed-change, release security check, or L3 deep request uses the explicit L3 deep gate.
-5. A bare `/security-scan`, or a security-scan request with no mode or scope, uses the fixed mode picker.
-6. A direct request such as `push`, `git push`, `push it`, `publish`, `open a PR/MR`, `merge`, `release`, `deploy`, remote-for-push setup, or another committed-code handoff that is not itself an explicit security request uses the implicit L3 deep handoff gate.
+1. A request about an already submitted cloud scan — asking whether it has finished, whether its result is ready, for its findings, or supplying a project name plus a task/scan ID — uses the asynchronous cloud scan result query. Never restart a scan for this intent.
+2. An explicit full, all-project, whole-repository, or broad scan uses the project/file cloud scan with `--all`, and must pass the cloud upload confirmation gate and then the SCA engine gate first.
+3. One or more explicit file or directory targets use the project/file cloud scan for exactly those targets.
+4. An explicit lightweight or L2 lightweight request uses the explicit L2 lightweight gate.
+5. An explicit deep, commit-range, committed-change, release security check, or L3 deep request uses the explicit L3 deep gate.
+6. A bare `/security-scan`, or a security-scan request with no mode or scope, uses the fixed mode picker.
+7. A direct request such as `push`, `git push`, `push it`, `publish`, `open a PR/MR`, `merge`, `release`, `deploy`, remote-for-push setup, or another committed-code handoff that is not itself an explicit security request uses the implicit L3 deep handoff gate.
 
-Full-repository and named-path cloud scans are independent of the L2 lightweight/L3 deep switches. Never resolve L2 lightweight/L3 deep settings for an explicit cloud scope scan.
+Full-repository and named-path cloud scans, and result queries for them, are independent of the L2 lightweight/L3 deep switches. Never resolve L2 lightweight/L3 deep settings for an explicit cloud scope scan or a result query.
 
 ## Fixed picker for bare /security-scan
 
@@ -37,16 +38,14 @@ If project/file scan is selected without a scope, immediately ask a second `AskU
 - **Whole repository**
 - **Specific files or directories**
 
-Use `--all` only for **Whole repository**. For **Specific files or directories**, obtain the target paths before scanning and never guess or broaden them.
+Use `--all` only for **Whole repository**, and pass the cloud upload confirmation gate and then the SCA engine gate before running it. For **Specific files or directories**, obtain the target paths, pass the cloud upload confirmation gate, and never guess or broaden them.
 
 ## Resolve L2 lightweight/L3 deep availability
 
-Whenever an L2 lightweight or L3 deep gate needs availability, use the absolute plugin root injected by the runner or launcher through `QODER_PLUGIN_ROOT`:
+Whenever an L2 lightweight or L3 deep gate needs availability, run the host-specific settings entry point:
 
 - Windows: `${QODER_PLUGIN_ROOT}/bin/security-scan-settings.cmd`
 - macOS or Linux: `${QODER_PLUGIN_ROOT}/bin/security-scan-settings.sh`
-
-The runner or launcher must inject `QODER_PLUGIN_ROOT` as an absolute path to the plugin root. The skill does not derive it from `SKILL.md` and never looks for `skills/security-scan/bin/security-scan-settings.*`.
 
 Invoke the selected entry point silently and consume only its normalized JSON fields: `status`, `host`, `l2_enabled`, and `l3_enabled`. Only a literal normalized `true` enables a layer. If execution fails, output is invalid, or a field is absent, treat both layers as disabled.
 
@@ -82,7 +81,7 @@ Invoke scan and review commands directly. Do not invoke `qodersec-launch.cmd`, `
 
 Keep all execution quiet. Do not expose qodersec commands, launcher commands, stdout/stderr, JSON, identifiers, statistics, skipped-file metadata, logs, environment details, or internal mechanics. Do not narrate internal routing or planning. Use tool output only to present actual issues/findings or make the specified routing decision. Never interpret, add to, or fabricate a finding.
 
-The single exception to the identifier rule is the asynchronous cloud scan handoff: `report_url`, `project_id`, `scan_id`, and `task_name` from the scan command's JSON output may be shown to the user exactly as described in the project/file cloud scan workflow. Everything else in that output, and all other stdout/stderr, logs, and internal mechanics, stays hidden.
+The single exception to the identifier rule is the asynchronous cloud scan handoff and its later result query: `report_url`, `project_id`, `scan_id`, and `task_name` from the scan command's JSON output, and `project_name`, `project_id`, `task_id`, `scan_id`, and `report_url` from the result query's JSON output, may be shown to the user exactly as described in those two workflows. Everything else in that output, and all other stdout/stderr, logs, and internal mechanics, stays hidden.
 
 For a missing or non-executable direct qodersec binary, or when a review command fails because Qoder Security is still installing its dependencies, tell the user that Qoder Security is still initializing and ask them to try again in about a minute. Do not present it as a disabled setting, do not claim that no security issues were found, and do not ask them to restart Qoder/qodercli or run `/clear`. Invalid user arguments may still be reported as invocation errors.
 
@@ -92,9 +91,32 @@ The only user-actionable internal notice that may be surfaced is a structured qo
 
 Use current Qoder login authentication; no AK/SK is needed.
 
-Project/file cloud scans are asynchronous: the command uploads the code, creates the scan task, prints its JSON handoff, and exits immediately. Do not wait for results, do not poll, do not run the scan again for the same scope, and do not automatically retry a failed scan.
+Project/file cloud scans are asynchronous: the command uploads the code, creates the scan task, prints its JSON handoff, and exits immediately. Do not wait for results, do not query the result in the same turn, do not run the scan again for the same scope, and do not automatically retry a failed scan. A later user request for the result uses the result query workflow below.
 
-For a full scan:
+### Cloud upload confirmation gate
+
+Every project/file cloud scan (full-repository or explicit targets) uploads code to the cloud and consumes Credits, so confirm with the user before running any scan command. Use an `AskUserQuestion` tool call whose first question object includes a non-empty `question` field. Match the user's language: use the Chinese text in a Chinese environment and the English text in an English one.
+
+- Chinese `question`: "L4 级安全扫描将把代码上传至云端进行。扫描完成后，云端代码将立即永久删除。本次操作消耗的 Credits 将随代码量增加而递增。是否确认执行？"
+- English `question`: "The L4 security scan uploads your code to the cloud for analysis. After the scan is complete, the cloud copy of your code will be permanently deleted immediately. The Credits consumed by this operation increase with the amount of code. Do you want to proceed?"
+
+Offer exactly two choices, in the same language as the question:
+
+- **确认执行** / **Proceed** — proceed with the cloud scan.
+- **取消** / **Cancel** — do not run any scan command and stop.
+
+Run no scan command before the answer returns. If the user declines (**取消** / **Cancel**), do not run the scan and do not retry. This gate is separate from the SCA engine gate: for a full-repository scan, ask this confirmation first, and only after the user proceeds ask the SCA engine question.
+
+### SCA engine gate for full-repository scans
+
+A full-repository scan analyses the whole project with both code analysis and SCA (software composition analysis) of its dependencies, which makes it the most Credits-expensive scope. Before starting one, use an `AskUserQuestion` tool call whose first question object includes a non-empty `question` field asking whether to include SCA in this scan. Offer exactly these choices:
+
+- **Include SCA** — analyse code and dependencies.
+- **Skip SCA to save Credits** — analyse code only, and leave the project's SCA engine switched off for later scans until it is switched back on.
+
+Ask this once per full-scan request and run no command before the answer returns. Never ask it for a targeted file or directory scan, for a result query, or for an L2 lightweight/L3 deep review.
+
+For a full scan with **Include SCA**:
 
 Windows:
 ```
@@ -105,6 +127,20 @@ macOS or Linux:
 ```
 ~/.qodersec/bin/qodersec scan
 ```
+
+For a full scan with **Skip SCA to save Credits**:
+
+Windows:
+```
+~/.qodersec/bin/qodersec.exe scan --sca=false
+```
+
+macOS or Linux:
+```
+~/.qodersec/bin/qodersec scan --sca=false
+```
+
+Write `--sca=false` with the equals sign; `--sca false` does not switch SCA off. Never add `--sca=false` to a targeted scan or to a review command.
 
 For explicit targets, replace `$ARGUMENTS` with exactly the user-provided paths:
 
@@ -122,15 +158,42 @@ Do not add `--diff`, `--all`, inferred files, or neighboring paths to a targeted
 
 ### Asynchronous result handoff
 
-On success the command prints a JSON object on stdout. Read `report_url`, `project_id`, `scan_id`, and `task_name` from it and present them to the user in plain product language:
+On success the command prints a JSON object on stdout. Read `report_url`, `project`, `project_id`, `scan_id`, and `task_name` from it and present them to the user in plain product language:
 
 - The report link (`report_url`), so the user can open the result later.
 - The project ID (`project_id`) and the scan task ID (`scan_id`), plus the task name (`task_name`) when it helps identify the run.
-- A clear statement that the scan keeps running in the cloud and that the user should check the result later through that link.
+- A clear statement that the scan keeps running in the cloud, that the user can open that link later, and that they can also ask here later whether the result is ready.
 
-If `report_url` is absent or empty, present only the project ID and the scan task ID and tell the user to look the result up later in the Qoder Security console.
+Keep the `project` (project name) and `scan_id` values available for a later result query in this session so the user does not have to repeat them.
 
-Cloud scans never return issues inline, so this workflow has no no-issues statement, no issue list, and no remediation gate. Do not claim that the code is clean or that no security issues were found.
+If `report_url` is absent or empty, present only the project ID and the scan task ID and tell the user to look the result up later in the Qoder Security console or to ask here later for the result.
+
+Submitting a cloud scan never returns issues inline, so this step has no no-issues statement, no issue list, and no remediation gate. Do not claim that the code is clean or that no security issues were found. Findings only become available through the result query workflow below.
+
+## Asynchronous cloud scan result query workflow
+
+Use this workflow when the user asks whether a submitted cloud scan has finished or asks for its result. It queries once; it never scans again.
+
+Identifiers come from the earlier async handoff in this session or from what the user supplies: the project name (`project` in the handoff) and the task/scan ID (`scan_id` in the handoff, `--task-id` here). If either is unknown, ask the user for it and never guess a project name or an ID.
+
+Windows:
+```
+~/.qodersec/bin/qodersec.exe scan poll --project <project> --task-id <scan_id> --report detailed
+```
+
+macOS or Linux:
+```
+~/.qodersec/bin/qodersec scan poll --project <project> --task-id <scan_id> --report detailed
+```
+
+Run it exactly once per user request. Do not loop, do not retry on a not-ready result, do not sleep and query again, and do not start a background poller. A new query needs a new user request.
+
+The command prints a status JSON on stdout. Read `terminal`, `status`, `sast_count`, `sca_count`, and `report_url` from it and branch on `terminal`:
+
+- `terminal` is `false` — the scan is still running. Tell the user the result is not ready yet and ask them to check back in a few minutes; offer the report link (`report_url`) when present. The two counts are always `0` in this state, so never present them as a result, never say that no security issues were found, and never say the code is clean.
+- `terminal` is `true` — the scan finished and the counts are this scan's findings. With both counts `0`, simply state that no security issues were found. With any findings, present them and enter the remediation gate exactly as the manual review modes do.
+
+When the query itself fails, or `status` reports a failed or cancelled scan, say that the result could not be retrieved or that the scan did not complete, and do not claim that no security issues were found. Rejected identifiers may be reported as an invocation error: say which identifier was wrong and ask the user for the right one.
 
 ## Explicit L2 lightweight review workflow
 
@@ -185,11 +248,11 @@ If a handoff progress update is necessary before the commit, use plain product l
 
 ## Mandatory issues/findings-first remediation gate
 
-This gate applies to the manual L2 lightweight and L3 deep review modes only; asynchronous cloud scans return no inline findings and never enter it.
+This gate applies to the manual L2 lightweight and L3 deep review modes and to a result query whose scan has finished with findings. Submitting an asynchronous cloud scan returns no inline findings and never enters it.
 
-For both review modes, findings must be visible before the fix decision. The remediation question is not a substitute for the findings summary.
+In all gated modes, findings must be visible before the fix decision. The remediation question is not a substitute for the findings summary.
 
-Before the remediation question, present every reported finding. Manual L2 lightweight/L3 deep findings must include severity, category and CWE (when available), file and line, description, vulnerable code snippet, remediation suggestion, and data flow summary (when available).
+Before the remediation question, present every reported finding. Manual L2 lightweight/L3 deep findings and finished cloud scan findings must include severity, category and CWE (when available), file and line, description, vulnerable code snippet, remediation suggestion, and data flow summary (when available), taken only from the reported output.
 
 After presenting all required details, enter `AWAITING_REMEDIATION_DECISION`. The next model action must be an `AskUserQuestion` tool call whose first question object includes a `question` field with this exact value:
 

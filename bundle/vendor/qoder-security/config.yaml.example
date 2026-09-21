@@ -61,7 +61,8 @@ file_filter:
 
 # Security review settings for the current Qoder plugin flow:
 # - L1 real-time pattern warnings run from the file-edit PostToolUse hook.
-# - Manual L2/L3 run only when the user invokes the skills.
+# - L3 deep review runs from the PostToolUse hook on `git push` commands.
+# - Manual L2/L3 run when the user invokes the skills.
 # - Full/file cloud scans run from the unified scan skill and use qoder_sdk transport settings.
 review:
 
@@ -124,12 +125,12 @@ review:
       # security-patterns.yaml.example for the schema and examples.
 
   # -------------------------------------------------------
-  # Manual review SDK path.
+  # SDK-backed review path (hook L3 and the manual L2/L3 skills).
   # -------------------------------------------------------
-  # L2/L3 manual skills spawn an inner qodercli through the Go SDK.
-  # The default Qoder plugin does not register Stop or Bash commit/push hooks;
-  # those legacy hook-mode settings are intentionally omitted from this example.
-  # Manual review protections remain active through review.previous_findings_ttl_secs
+  # The git-push PostToolUse hook and the L2/L3 manual skills all spawn an inner
+  # qodercli through the Go SDK. The plugin does not register a Stop hook, so the
+  # legacy stop.* knobs are intentionally omitted from this example.
+  # Review protections remain active through review.previous_findings_ttl_secs
   # and review.shared.*. The SDK transport itself is configured under the top-level
   # `transport:` root (see the end of this file): both review (L1-L3) and
   # `scan --platform qoder` (L4) drive it, so it is not a review-only setting.
