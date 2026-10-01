@@ -85,7 +85,13 @@ The single exception to the identifier rule is the asynchronous cloud scan hando
 
 For a missing or non-executable direct qodersec binary, or when a review command fails because Qoder Security is still installing its dependencies, tell the user that Qoder Security is still initializing and ask them to try again in about a minute. Do not present it as a disabled setting, do not claim that no security issues were found, and do not ask them to restart Qoder/qodercli or run `/clear`. Invalid user arguments may still be reported as invocation errors.
 
-The only user-actionable internal notice that may be surfaced is a structured qodersec JSON `notice` with `code` equal to `qoder_credits_exhausted`. If this notice appears, do not say that no security issues were found. Tell the user exactly: "You've run out of Credits, so code security scanning is unavailable. Upgrade your plan or buy an add-on pack to continue." If `notice.pricing_url` is present, include that billing link. Do not expose any other qodersec stdout/stderr, logs, raw SDK errors, identifiers, or scan statistics.
+The only user-actionable internal notices that may be surfaced are structured qodersec JSON `notice` objects whose `code` is one of the following. For any such notice, do not say that no security issues were found, do not present it as an asynchronous handoff, and do not expose any other qodersec stdout/stderr, logs, raw SDK errors, identifiers, or scan statistics.
+
+- `qoder_credits_exhausted`: Tell the user exactly: "You've run out of Credits, so code security scanning is unavailable. Upgrade your plan or buy an add-on pack to continue." If `notice.pricing_url` is present, include that billing link.
+- `bundle_size_exceeded`: The scan was stopped before it started because the upload bundle is too large. Use `notice.limit` for the size limit in the message below (fall back to `500MB` if it is absent). Match the user's language:
+  - Chinese: "待上传代码包已超过 <limit> 云端扫描限制。请仅指定需要扫描的核心文件或目录；或在项目根目录的 `.qodersecignore` 文件中按 `.gitignore` 语法排除无关文件（如构建产物、第三方依赖、数据集）后重试。"
+  - English: "The code bundle exceeds the <limit> cloud-scan size limit. Specify only the core files or directories to scan, or exclude unrelated files (build output, third-party dependencies, datasets) by adding them to a `.qodersecignore` file at the project root using `.gitignore` syntax, then try again."
+  The `.qodersecignore` file lives at the project root and uses the same syntax as `.gitignore`. Environment, key, and certificate files are already excluded by default. An explicitly named single file bypasses these filters.
 
 ## Project/file cloud scan workflow
 
@@ -97,7 +103,7 @@ Project/file cloud scans are asynchronous: the command uploads the code, creates
 
 Every project/file cloud scan (full-repository or explicit targets) uploads code to the cloud and consumes Credits, so confirm with the user before running any scan command. Use an `AskUserQuestion` tool call whose first question object includes a non-empty `question` field. Match the user's language: use the Chinese text in a Chinese environment and the English text in an English one.
 
-- Chinese `question`: "L4 级安全扫描将把代码上传至云端进行。扫描完成后，云端代码将立即永久删除。本次操作消耗的 Credits 将随代码量增加而递增。是否确认执行？"
+- Chinese `question`: "L4 全量仓库扫描代码将会上传云端进行安全扫描，但不会上传 .env、密钥、证书等任何凭证文件，扫描完成后我们将立即永久删除您的代码。同时消耗的 Credits 将随着代码数量的增加而增加，请确认是否执行？"
 - English `question`: "The L4 security scan uploads your code to the cloud for analysis. After the scan is complete, the cloud copy of your code will be permanently deleted immediately. The Credits consumed by this operation increase with the amount of code. Do you want to proceed?"
 
 Offer exactly two choices, in the same language as the question:

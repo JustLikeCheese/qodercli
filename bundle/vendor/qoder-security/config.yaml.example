@@ -26,6 +26,15 @@ qodersec:
 # You can also append through environment variables:
 #   YUNDUN_CODESEC_EXCLUDE_EXTS=.log,.tmp
 #   YUNDUN_CODESEC_EXCLUDE_PATTERNS=generated/,fixtures/
+#
+# Project-level .qodersecignore:
+#   Place a .qodersecignore file at the repository root to exclude files from
+#   scanning and cloud upload. It uses the same syntax as .gitignore (globs,
+#   directory rules, and `!` negation). Environment files (.env*), private keys,
+#   and certificates are excluded by default through the exclude_exts /
+#   exclude_patterns entries below; adjust them here to change that behaviour.
+#   Files larger than 10 MiB are never added to the upload bundle. An explicitly
+#   named single file bypasses pattern filters, but not this size limit.
 file_filter:
   # Directory/file patterns to exclude. Matching path substrings are skipped.
   exclude_patterns:
@@ -39,25 +48,146 @@ file_filter:
     - target/             # Rust/Java build output
     - .min.js             # Minified JavaScript
     - .lock               # Lock files
+    # Secrets not caught by extension alone (dotted env files, SSH key names).
+    - .env.               # .env.local, .env.production, ...
+    - id_rsa              # SSH private keys (also matches id_rsa.pub)
+    - id_dsa
+    - id_ecdsa
+    - id_ed25519
 
   # File extensions to exclude, typically binary or non-source files.
+  # This mirrors the built-in defaults; listing a file_filter section replaces
+  # them entirely, so copy what you need before trimming.
   exclude_exts:
+    # Images / fonts / documents
     - .png
     - .jpg
     - .jpeg
     - .gif
     - .ico
     - .svg
+    - .bmp
+    - .tiff
+    - .tif
+    - .webp
+    - .avif
+    - .heic
+    - .psd
+    - .ai
     - .pdf
-    - .zip
-    - .tar
-    - .gz
     - .woff
     - .woff2
     - .ttf
+    - .otf
     - .eot
+    # Audio / video
     - .mp4
     - .mp3
+    - .mov
+    - .avi
+    - .mkv
+    - .flv
+    - .wmv
+    - .webm
+    - .wav
+    - .flac
+    - .aac
+    - .ogg
+    - .m4a
+    # Archives / packages
+    - .zip
+    - .tar
+    - .gz
+    - .tgz
+    - .bz2
+    - .tbz2
+    - .xz
+    - .zst
+    - .lz4
+    - .7z
+    - .rar
+    - .iso
+    - .dmg
+    - .cab
+    - .deb
+    - .rpm
+    - .msi
+    - .apk
+    - .aar
+    # Compiled / binary objects
+    - .exe
+    - .dll
+    - .so
+    - .dylib
+    - .a
+    - .o
+    - .obj
+    - .lib
+    - .bin
+    - .class
+    - .jar
+    - .war
+    - .ear
+    - .pyc
+    - .pyo
+    - .pyd
+    - .wasm
+    - .node
+    - .pdb
+    # Databases / data stores / dumps
+    - .db
+    - .db3
+    - .sqlite
+    - .sqlite3
+    - .mdb
+    - .accdb
+    - .dbf
+    - .fpt
+    - .cdx
+    - .myd
+    - .myi
+    - .ibd
+    - .frm
+    - .dmp
+    - .bak
+    # Large data / ML model artifacts
+    - .parquet
+    - .avro
+    - .orc
+    - .feather
+    - .npy
+    - .npz
+    - .h5
+    - .hdf5
+    - .pb
+    - .onnx
+    - .pt
+    - .pth
+    - .ckpt
+    - .safetensors
+    - .model
+    # Secrets: environment / key / certificate / credential files
+    - .env
+    - .envrc
+    - .netrc
+    - .pgpass
+    - .pem
+    - .key
+    - .keystore
+    - .jks
+    - .p12
+    - .pfx
+    - .p8
+    - .pkcs12
+    - .ppk
+    - .crt
+    - .cer
+    - .der
+    - .csr
+    - .p7b
+    - .p7c
+    - .gpg
+    - .asc
 
 # Security review settings for the current Qoder plugin flow:
 # - L1 real-time pattern warnings run from the file-edit PostToolUse hook.
