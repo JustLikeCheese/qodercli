@@ -21,16 +21,8 @@ set "SCRIPT_DIR=%~dp0"
 set "PLUGIN_ROOT=%QODER_PLUGIN_ROOT%"
 if not defined PLUGIN_ROOT set "PLUGIN_ROOT=%SCRIPT_DIR%.."
 
-if defined QODERSEC_HOME goto use_qodersec_home
-if defined CODESEC_HOME goto use_codesec_home
+REM Hardcoded home (same as the launcher).
 set "CHOME=%USERPROFILE%\.qodersec"
-goto home_ready
-:use_qodersec_home
-set "CHOME=%QODERSEC_HOME%"
-goto home_ready
-:use_codesec_home
-set "CHOME=%CODESEC_HOME%"
-:home_ready
 
 set "QODERSEC_HOME=%CHOME%"
 set "CODESEC_HOME=%CHOME%"

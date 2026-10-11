@@ -8,16 +8,8 @@ REM cmdlet and keeps working there. On old/stripped Windows without tar.exe we f
 REM back to Expand-Archive (works under FullLanguage). Download / extract / verify
 REM are separate steps with distinct error messages.
 
-if defined QODERSEC_HOME goto use_qodersec_home
-if defined CODESEC_HOME goto use_codesec_home
+REM Hardcoded home (same as the launcher).
 set "CHOME=%USERPROFILE%\.qodersec"
-goto home_ready
-:use_qodersec_home
-set "CHOME=%QODERSEC_HOME%"
-goto home_ready
-:use_codesec_home
-set "CHOME=%CODESEC_HOME%"
-:home_ready
 
 if /I "%QODER_SITE%"=="CN" goto china_site
 set "VERSION=%QODERSEC_CLI_VERSION_GLOBAL%"

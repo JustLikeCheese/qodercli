@@ -18,14 +18,9 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="${QODER_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
-# ONE root for config + credentials + logs + state (same order as the launcher).
-if [ -n "${QODERSEC_HOME:-}" ]; then
-    _CHOME="$QODERSEC_HOME"
-elif [ -n "${CODESEC_HOME:-}" ]; then
-    _CHOME="$CODESEC_HOME"
-else
-    _CHOME="$HOME/.qodersec"
-fi
+# ONE root for config + credentials + logs + state (same as the launcher).
+_CHOME="$HOME/.qodersec"
+
 export QODERSEC_HOME="$_CHOME"
 export CODESEC_HOME="$_CHOME"
 export CODESEC_LOG_NAME="${CODESEC_LOG_NAME:-qodersec}"

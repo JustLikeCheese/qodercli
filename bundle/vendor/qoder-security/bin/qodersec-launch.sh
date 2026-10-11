@@ -14,10 +14,10 @@ export QODER_PLUGIN_ROOT="$PLUGIN_ROOT"
 export CODESEC_LOG_NAME="qodersec"
 
 # Pinned dependency versions (updated when plugin is published).
-export QODERSEC_CLI_VERSION_GLOBAL="0.9.4"
-export QODERSEC_CLI_VERSION_CN="0.9.4"
-export CODESEC_CLI_VERSION_GLOBAL="0.9.4"
-export CODESEC_CLI_VERSION_CN="0.9.4"
+export QODERSEC_CLI_VERSION_GLOBAL="0.9.5"
+export QODERSEC_CLI_VERSION_CN="0.9.5"
+export CODESEC_CLI_VERSION_GLOBAL="0.9.5"
+export CODESEC_CLI_VERSION_CN="0.9.5"
 export QODERCLI_VERSION_GLOBAL="1.1.41"
 export QODERCLI_VERSION_CN="1.1.41"
 export QODERCLI_MANIFEST_URL_GLOBAL="https://download.qoder.com/qodercli/channels/1.1.41/manifest.json"
@@ -27,13 +27,10 @@ export QODERCLI_MANIFEST_URL_CN="https://static.qoder.com.cn/qoder-cli-cn/channe
 export PATH="$HOME/.qodersec/bin:$HOME/.local/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
 
 # ONE root for config + credentials + logs + state.
-if [ -n "${QODERSEC_HOME:-}" ]; then
-    _CHOME="$QODERSEC_HOME"
-elif [ -n "${CODESEC_HOME:-}" ]; then
-    _CHOME="$CODESEC_HOME"
-else
-    _CHOME="$HOME/.qodersec"
-fi
+# Ignore inherited QODERSEC_HOME/CODESEC_HOME to prevent arbitrary command
+# execution via env var hijacking; the export below overwrites them.
+_CHOME="$HOME/.qodersec"
+
 mkdir -p "$_CHOME" 2>/dev/null
 mkdir -p "$_CHOME/logs" 2>/dev/null
 _QODERSEC_LOG="$_CHOME/logs/qodersec.log"

@@ -13,14 +13,9 @@
 # to qodersec after extraction.
 set -e
 
-# Resolve home: QODERSEC_HOME > CODESEC_HOME > ~/.qodersec
-if [ -n "${QODERSEC_HOME:-}" ]; then
-    _CHOME="$QODERSEC_HOME"
-elif [ -n "${CODESEC_HOME:-}" ]; then
-    _CHOME="$CODESEC_HOME"
-else
-    _CHOME="$HOME/.qodersec"
-fi
+# Resolve home: hardcoded to ~/.qodersec (env vars ignored, see qodersec-launch.sh).
+_CHOME="$HOME/.qodersec"
+
 BIN_DIR="${_CHOME}/bin"
 BINARY_NAME="qodersec"
 QODERSEC_BIN="${BIN_DIR}/${BINARY_NAME}"

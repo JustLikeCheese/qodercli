@@ -8,9 +8,9 @@ REM Keep this file CRLF-terminated: cmd.exe corrupts LF-only polyglot parsing.
 REM
 REM Glue (unified under ~/.qodersec):
 REM   - locate the binary in ~/.qodersec/bin/ (installed by the background updater)
-REM   - resolve QODERSEC_HOME (default ~/.qodersec) — the ONE root for config + creds
-REM     + logs + state; seed config.yaml there from the plugin's bundled template
-REM     when it is missing
+REM   - resolve data root to %USERPROFILE%\.qodersec (the ONE root for config + creds
+REM     + logs + state); inherited QODERSEC_HOME / CODESEC_HOME are ignored and
+REM     overwritten to prevent arbitrary command execution via env var hijacking
 REM   - maps QODERSEC_HOME → CODESEC_HOME internally (Go binary reads CODESEC_HOME)
 REM   - forward stdin + every argument unchanged
 REM
@@ -29,26 +29,18 @@ REM Tell the Go binary to use qodersec-specific naming (log file, etc.)
 set "CODESEC_LOG_NAME=qodersec"
 REM Pinned dependency versions (updated when plugin is published)
 REM Set both QODERSEC_* and CODESEC_* for Go binary compatibility
-set "QODERSEC_CLI_VERSION_GLOBAL=0.9.4"
-set "QODERSEC_CLI_VERSION_CN=0.9.4"
-set "CODESEC_CLI_VERSION_GLOBAL=0.9.4"
-set "CODESEC_CLI_VERSION_CN=0.9.4"
+set "QODERSEC_CLI_VERSION_GLOBAL=0.9.5"
+set "QODERSEC_CLI_VERSION_CN=0.9.5"
+set "CODESEC_CLI_VERSION_GLOBAL=0.9.5"
+set "CODESEC_CLI_VERSION_CN=0.9.5"
 set "QODERCLI_VERSION_GLOBAL=1.1.41"
 set "QODERCLI_VERSION_CN=1.1.41"
 set "QODERCLI_MANIFEST_URL_GLOBAL=https://download.qoder.com/qodercli/channels/1.1.41/manifest.json"
 set "QODERCLI_MANIFEST_URL_CN=https://static.qoder.com.cn/qoder-cli-cn/channels/1.1.41/manifest.json"
 
-REM Resolve home without a parenthesized block so paths containing ! or ) remain intact.
-if defined QODERSEC_HOME goto use_qodersec_home
-if defined CODESEC_HOME goto use_codesec_home
+REM Hardcoded home — inherited QODERSEC_HOME/CODESEC_HOME are ignored and
+REM overwritten below to prevent arbitrary command execution via env var hijacking.
 set "CHOME=%USERPROFILE%\.qodersec"
-goto home_resolved
-:use_qodersec_home
-set "CHOME=%QODERSEC_HOME%"
-goto home_resolved
-:use_codesec_home
-set "CHOME=%CODESEC_HOME%"
-:home_resolved
 if not exist "%CHOME%" mkdir "%CHOME%" >nul 2>nul
 if not exist "%CHOME%\." echo qodersec-launch: %CHOME% exists but is not a directory >&2
 if not exist "%CHOME%\." exit /b 127
