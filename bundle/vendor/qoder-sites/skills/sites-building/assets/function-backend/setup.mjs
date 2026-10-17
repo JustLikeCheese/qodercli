@@ -1,0 +1,37 @@
+import '../../templates/react-starter/scripts/check-node.mjs';
+import { copyFile, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
+
+const destination = process.argv[2];
+if (!destination || process.argv.length !== 3) throw new Error('Usage: node setup.mjs <new-or-empty-project-directory>');
+const target = resolve(destination), source = fileURLToPath(new URL('.', import.meta.url));
+// The shared initializer enforces Node and refuses nonempty/symlink destinations.
+execFileSync(process.execPath, [fileURLToPath(new URL('../../scripts/create-site.mjs', import.meta.url)), target], { stdio: 'inherit' });
+for (const name of ['functions/handler.ts', 'dev/function-local.ts']) await rm(join(target, name));
+for (const name of ['Notes.tsx', 'api.ts', 'records.css']) await copyFile(join(source, name), join(target, 'src', name));
+for (const name of ['index.ts', 'routes.mjs']) await copyFile(join(source, name), join(target, 'functions', name));
+await copyFile(join(source, 'schema.sql'), join(target, 'schema.sql'));
+await copyFile(join(source, 'dev/local.mjs'), join(target, 'dev/local.mjs'));
+await copyFile(join(source, 'dev/proxy.ts'), join(target, 'dev/proxy.ts'));
+await writeFile(join(target, 'src/App.tsx'), 'import { Notes } from "./Notes";\nexport default function App() { return <Notes local={import.meta.env.DEV} />; }\n');
+const manifest = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'));
+manifest.scripts.dev = 'node dev/local.mjs';
+manifest.scripts['dev:frontend'] = 'vite --host 127.0.0.1';
+delete manifest.scripts['dev:function'];
+delete manifest.scripts['check:function'];
+await writeFile(join(target, 'package.json'), JSON.stringify(manifest, null, 2) + '\n');
+await writeFile(join(target, 'vite.config.ts'), `import { fileURLToPath, URL } from 'node:url';
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { localProxy } from './dev/proxy';
+const target = process.env.RECORDS_LOCAL_API || 'http://127.0.0.1:8000';
+const proxy = localProxy(target);
+export default defineConfig({ plugins: [react()], resolve: { alias: { '@': fileURLToPath(new URL('.', import.meta.url)) } }, server: { host: '127.0.0.1', proxy }, preview: { host: '127.0.0.1', proxy }, build: { outDir: 'dist' } });
+`);
+await mkdir(join(target, 'public'), { recursive: true });
+await writeFile(join(target, 'public/favicon.svg'), '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#152b39"/><path d="M9 8h14v16H9zM13 12h6m-6 4h6m-6 4h4" fill="none" stroke="#b4e2c9" stroke-width="2"/></svg>');
+await writeFile(join(target, 'index.html'), '<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="description" content="记录想法，整理相关资料。"/><link rel="icon" href="/favicon.svg"/><title>拾页 · 记录与附件</title><style>body{margin:0}</style></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>\n');
+await copyFile(join(source, 'README.md'), join(target, 'README.md'));
+console.log(`Records example assembled at ${target}. Run npm ci, then npm run dev there. No cloud resources were created.`);

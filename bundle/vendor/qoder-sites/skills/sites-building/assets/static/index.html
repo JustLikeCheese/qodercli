@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Site</title>
+    <style>
+      body { margin: 0; font: 18px/1.6 system-ui, sans-serif; color: #20252b; background: #f5f7fa; }
+      main { max-width: 40rem; margin: 8vh auto; padding: 2rem; }
+      button { font: inherit; padding: .6rem 1rem; cursor: pointer; }
+      button:focus-visible { outline: 3px solid #245ccc; outline-offset: 3px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>My Site</h1>
+      <p>Click the button to try your first interaction.</p>
+      <button id="increment" type="button">Increment</button>
+      <p role="status">Clicks: <span id="count">0</span></p>
+    </main>
+    <script>
+      let count = 0;
+      document.querySelector('#increment').addEventListener('click', () => {
+        document.querySelector('#count').textContent = String(++count);
+      });
+    </script>
+  </body>
+</html>

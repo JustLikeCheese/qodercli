@@ -1,0 +1,8 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>我的记录</title>
+<style>body{max-width:48rem;margin:3rem auto;padding:1rem;font:16px system-ui}[hidden]{display:none!important}button,input{padding:.6rem;margin:.3rem}[role=alert]{color:#b33}</style>
+<h1>我的记录</h1><p id="session">读取会话中…</p><p role="alert"></p>
+<form id="signin-github" data-auth="github" method="post" action="/functions/v1/app/auth/signin/github" hidden><input type="hidden" name="csrfToken"><input type="hidden" name="callbackUrl"><button disabled>使用 GitHub 登录</button></form>
+<form id="signin-google" data-auth="google" method="post" action="/functions/v1/app/auth/signin/google" hidden><input type="hidden" name="csrfToken"><input type="hidden" name="callbackUrl"><button disabled>使用 Google 登录</button></form>
+<form id="signout" data-auth="signout" method="post" action="/functions/v1/app/auth/signout" hidden><input type="hidden" name="csrfToken"><input type="hidden" name="callbackUrl"><button disabled>退出登录</button></form>
+<section id="notes" hidden><form id="note-form"><input name="title" maxlength="300" required placeholder="记录标题"><button>保存</button></form><button id="reload">重新读取</button><ul id="list"></ul></section>
+<script type="module" src="./app.mjs"></script></html>

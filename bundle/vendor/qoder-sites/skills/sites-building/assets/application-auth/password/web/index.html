@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>账号认证实验室</title>
+<meta name="description" content="本站点自有的用户名 + 密码注册与登录：会话保存在服务端，记录只属于当前登录账号。">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <div>
+        <h1>账号认证实验室</h1>
+        <p class="sub">自建用户名 + 密码 · 服务端 PBKDF2 口令校验 · 自有记录按账号隔离（Global TEST）</p>
+      </div>
+    </div>
+    <span id="auth-chip" class="chip chip-idle">正在读取登录状态…</span>
+  </div>
+</header>
+
+<main class="wrap grid">
+  <section id="guest-card" class="card" hidden>
+    <h2>登录</h2>
+    <p class="hint">使用本站点自己的账号登录。没有账号请先注册；本站不使用邮箱，也不接入任何外部账号服务。</p>
+    <form id="login-form" class="form" novalidate>
+      <label for="login-username">用户名</label>
+      <input id="login-username" type="text" autocomplete="username" spellcheck="false" placeholder="3–32 位，字母/数字/下划线/短横线">
+      <label for="login-password">密码</label>
+      <input id="login-password" type="password" autocomplete="current-password" placeholder="至少 15 个字符">
+      <div class="actions">
+        <button id="login-submit" type="submit" disabled>登录</button>
+        <button id="login-toggle" type="button" class="ghost" aria-pressed="false">显示密码</button>
+      </div>
+    </form>
+  </section>
+
+  <section id="register-card" class="card" hidden>
+    <h2>注册</h2>
+    <p class="hint">用户名会统一转成小写后保存（大小写不敏感）；密码只保存加盐派生结果，不保存明文。</p>
+    <form id="register-form" class="form" novalidate>
+      <label for="register-username">用户名</label>
+      <input id="register-username" type="text" autocomplete="username" spellcheck="false" placeholder="3–32 位，字母/数字/下划线/短横线">
+      <label for="register-password">密码</label>
+      <input id="register-password" type="password" autocomplete="new-password" placeholder="至少 15 个字符">
+      <p class="counter">密码要求：≥ 15 个字符，且 ≤ 256 字节（UTF-8）</p>
+      <div class="actions">
+        <button id="register-submit" type="submit" disabled>注册并登录</button>
+        <button id="register-toggle" type="button" class="ghost" aria-pressed="false">显示密码</button>
+      </div>
+    </form>
+  </section>
+
+  <section id="account-card" class="card" hidden>
+    <h2>当前账号</h2>
+    <p class="hint">登录状态保存在服务端的会话记录里；浏览器只携带一个不透明的 HttpOnly 会话 Cookie。</p>
+    <div id="account-body" class="identity"></div>
+    <div class="actions">
+      <button id="logout" type="button" class="danger">退出登录</button>
+      <button id="reload" type="button" class="ghost">重新读取</button>
+    </div>
+    <p id="account-status" class="status" role="status" aria-live="polite"></p>
+  </section>
+
+  <section id="notes-card" class="card span" hidden>
+    <h2>我的记录</h2>
+    <p class="hint">只返回当前登录账号自己的记录；创建时使用一次性幂等键，重复提交同一命令不会产生第二条记录。</p>
+    <form id="note-form" class="form" novalidate>
+      <label for="note-title">记录标题</label>
+      <input id="note-title" type="text" maxlength="300" autocomplete="off" placeholder="例如：账号 A 的第一条记录">
+      <div class="actions">
+        <button id="create-note" type="submit" disabled>创建记录</button>
+      </div>
+    </form>
+    <p id="note-status" class="status" role="status" aria-live="polite"></p>
+    <p id="note-error" class="error" role="alert" hidden></p>
+    <ul id="notes" class="notes"></ul>
+    <p id="notes-empty" class="muted" hidden>当前没有记录。</p>
+  </section>
+
+  <p id="error" class="error span" role="alert" hidden></p>
+
+  <section class="card span">
+    <h2>验证步骤</h2>
+    <ol class="steps">
+      <li>注册账号 A（例如 <code>alpha01</code>）并创建一条记录。</li>
+      <li>刷新页面，确认仍是登录状态、记录仍在。</li>
+      <li>退出登录，确认回到未登录状态。</li>
+      <li>注册账号 B，确认 B <strong>看不到 A 的记录</strong>，且 B 新建的记录不影响 A。</li>
+      <li>用 A 登录回来，确认 A 的记录仍在；故意输错密码，确认提示登录失败且不区分「用户名不存在」与「密码错误」。</li>
+    </ol>
+    <p class="note">该站点为私有站点：访问前需要先通过平台准入。网关要求的是平台身份，本应用要求的是本站点自己的账号，两者含义不同——通过网关登录并不等于已经登录本应用。</p>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <span>Global TEST 环境 · 仅用于合成测试数据</span>
+  <span>artifact v2 · function_backend · 自建账号认证</span>
+</footer>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sites realtime transport demo</title>
+<style>
+  body { font: 16px system-ui, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 20px; color: #172337; }
+  section { border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; margin: 20px 0; }
+  button, input { font: inherit; padding: 8px; margin: 4px 0; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+</style>
+<h1>Sites realtime transport demo</h1>
+<section>
+  <h2>Text and binary echo</h2>
+  <p>Send text and a 640-byte binary frame to a same-origin Function.</p>
+  <button id="echo">Run echo</button>
+  <pre id="echo-result" aria-live="polite">Ready</pre>
+</section>
+<section>
+  <h2>QCA text-to-audio connection</h2>
+  <p>Requires the server's authorized conversation mapping. This diagnostic displays captions and counts PCM bytes; it does not record or play audio.</p>
+  <label>Application conversation <input id="conversation" autocomplete="off" placeholder="Your application ID"></label>
+  <div><button id="connect">Connect</button> <button id="send" disabled>Send test text</button> <button id="disconnect" disabled>Disconnect</button></div>
+  <pre id="voice-result" aria-live="polite">Server integration required</pre>
+</section>
+<script type="module">
+  const element = id => document.getElementById(id);
+  const address = action => {
+    const url = new URL('/functions/v1/app', location.origin);
+    url.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    url.searchParams.set('action', action);
+    return url;
+  };
+  const live = new Set();
+  function socket(url) {
+    const ws = new WebSocket(url);
+    live.add(ws);
+    ws.addEventListener('close', () => live.delete(ws), { once: true });
+    return ws;
+  }
+  element('echo').onclick = () => {
+    element('echo').disabled = true;
+    element('echo-result').textContent = 'Connecting…';
+    const ws = socket(address('ws-echo'));
+    ws.binaryType = 'arraybuffer';
+    const expected = Uint8Array.from({ length: 640 }, (_, i) => i % 256);
+    let textOK = false, binaryOK = false;
+    const timer = setTimeout(() => { element('echo-result').textContent = 'Echo timed out'; ws.close(); }, 10000);
+    ws.onopen = () => { ws.send('Sites WebSocket echo'); ws.send(expected); };
+    ws.onmessage = ({ data }) => {
+      if (typeof data === 'string') textOK = data === 'Sites WebSocket echo';
+      else { const actual = new Uint8Array(data); binaryOK = actual.length === expected.length && actual.every((b, i) => b === expected[i]); }
+      element('echo-result').textContent = `Text: ${textOK ? 'OK' : 'pending'}\nBinary: ${binaryOK ? '640 bytes match' : 'pending'}`;
+      if (textOK && binaryOK) ws.close();
+    };
+    ws.onerror = () => { element('echo-result').textContent = 'Connection failed. Check site access and Function routing.'; };
+    ws.onclose = () => { clearTimeout(timer); element('echo').disabled = false; };
+  };
+  let current, closingId, closeTimer;
+  const envelope = (type, payload = {}) => JSON.stringify({ version: 'voice.realtime.v1', type, payload });
+  element('connect').onclick = () => {
+    const applicationId = element('conversation').value.trim();
+    if (!/^[A-Za-z0-9_-]{1,128}$/.test(applicationId)) { element('voice-result').textContent = 'Enter an application conversation ID.'; return; }
+    const url = address('realtime');
+    url.searchParams.set('conversation', applicationId);
+    const ws = socket(url);
+    current = ws; closingId = undefined;
+    element('connect').disabled = true;
+    element('voice-result').textContent = 'Waiting for voice.ready…';
+    let audioBytes = 0;
+    const cancelled = new Set();
+    ws.onmessage = ({ data }) => {
+      if (current !== ws) return;
+      const event = JSON.parse(data), p = event.payload;
+      if (event.type === 'voice.ready') {
+        element('send').disabled = false; element('disconnect').disabled = false;
+        element('voice-result').textContent = 'Ready. Input: PCM16 16 kHz; output: PCM16 24 kHz.';
+      } else if (event.type === 'transcript.final') {
+        element('voice-result').textContent = `${p.role}: ${p.text}\nReceived PCM: ${audioBytes} bytes`;
+      } else if (event.type === 'audio.delta') {
+        audioBytes += atob(p.audio).length;
+        const receipt = {};
+        for (const key of ['work_id', 'announcement_id']) if (event[key]) receipt[key] = event[key];
+        const key = JSON.stringify(receipt);
+        // This demo cannot play audio. Correlate cancellation with the actual audio
+        // event; audio.done is not guaranteed to repeat that event's identifiers.
+        if (!closingId && !cancelled.has(key)) {
+          cancelled.add(key);
+          ws.send(envelope('playback.cancelled', receipt));
+        }
+      } else if (event.type === 'audio.done') {
+        element('voice-result').textContent += `\nReceived PCM: ${audioBytes} bytes (playback cancelled in this demo)`;
+        cancelled.clear();
+      } else if (event.type === 'error') {
+        element('voice-result').textContent = 'Realtime request failed. Check server diagnostics.';
+      } else if (event.type === 'voice.replaced') {
+        element('voice-result').textContent = 'This connection was replaced.';
+        ws.close();
+      } else if (event.type === 'connection.closed' && p.request_id === closingId) ws.close();
+    };
+    ws.onerror = () => { if (current === ws) element('voice-result').textContent = 'Connection failed. Check login, ownership and server configuration.'; };
+    ws.onclose = () => {
+      if (current !== ws) return;
+      clearTimeout(closeTimer); current = undefined;
+      element('connect').disabled = false; element('send').disabled = true; element('disconnect').disabled = true;
+      element('voice-result').textContent += '\nDisconnected. Reconnect explicitly; sent text is not replayed.';
+    };
+  };
+  element('send').onclick = () => {
+    if (current?.readyState === WebSocket.OPEN) current.send(envelope('text.message', { text: 'This is a connection test. Say only: test successful.' }));
+  };
+  element('disconnect').onclick = () => {
+    if (current?.readyState !== WebSocket.OPEN) return;
+    const ws = current;
+    element('send').disabled = true; element('disconnect').disabled = true;
+    closingId = crypto.randomUUID();
+    ws.send(envelope('connection.close', { request_id: closingId }));
+    closeTimer = setTimeout(() => ws.close(), 3000);
+  };
+  addEventListener('pagehide', () => { clearTimeout(closeTimer); for (const ws of live) ws.close(); });
+</script>
+</html>

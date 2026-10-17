@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>澄光 · 对话工作室</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <button id="sidebar-scrim" class="scrim" aria-label="收起会话列表"></button>
+  <aside class="sidebar" aria-label="会话">
+    <a class="brand" href="/" aria-label="澄光对话工作室"><span class="brand-mark">✳</span><span>澄光<small>CONVERSATION STUDIO</small></span></a>
+    <button id="new-chat" class="new-chat"><span aria-hidden="true">＋</span> 开始新对话 <kbd>NEW</kbd></button>
+    <div class="section-label">我的对话 <span id="conversation-count">0</span></div>
+    <nav id="conversation-list" class="conversation-list" aria-label="历史对话"><p class="list-empty">正在加载…</p></nav>
+    <footer class="sidebar-footer">
+      <div class="local-person"><span class="avatar">L</span><span>本地访客<small id="persistence-note">历史保留至本地服务停止</small></span></div>
+      <button id="theme" class="theme-button" aria-label="切换深浅主题">◐ <span>切换主题</span></button>
+    </footer>
+  </aside>
+  <main>
+    <header class="topbar">
+      <div class="topbar-title"><button id="menu" class="icon-button mobile-only" aria-label="打开会话列表">☰</button><span id="conversation-title">新的对话</span></div>
+      <div class="topbar-actions"><span id="mode-badge" class="mode-badge">正在连接</span><span class="connection"><i id="connection-dot"></i><span id="connection-label">加载中</span></span></div>
+    </header>
+    <div id="timeline" class="timeline">
+      <section id="welcome" class="welcome">
+        <div class="welcome-symbol" aria-hidden="true">✳</div>
+        <p class="eyebrow">从一个想法开始</p>
+        <h1>把思路，说清楚。</h1>
+        <p class="welcome-description">一个可以继续、可以暂停的对话空间。<br>从下面的话题开始，或写下你正在想的事。</p>
+        <div class="suggestions">
+          <button data-prompt="帮我把一个新想法拆成可以开始的三个步骤"><span>↗</span><strong>把想法变成行动</strong><small>找到值得先做的第一步</small></button>
+          <button data-prompt="和我一起梳理这周的工作重点"><span>◎</span><strong>整理脑中的线索</strong><small>给复杂的事情一点秩序</small></button>
+          <button data-prompt="我想试试流式回复和中途停止"><span>≈</span><strong>体验一段对话</strong><small>看看回复如何逐步展开</small></button>
+        </div>
+      </section>
+      <section id="messages" class="messages" aria-label="消息记录" aria-live="off"></section>
+    </div>
+    <div class="composer-area">
+      <div id="notice" class="notice" role="status" hidden></div>
+      <div class="activity-row"><span id="activity" role="status">准备好开始了</span><button id="recover" class="text-button" hidden>恢复状态</button><button id="stop" class="stop-button" hidden>■ 停止回复</button></div>
+      <form id="composer" class="composer">
+        <label for="prompt" class="sr-only">输入消息</label>
+        <textarea id="prompt" rows="2" maxlength="4000" placeholder="写下你的想法…" aria-describedby="composer-hint"></textarea>
+        <div class="composer-bottom"><span id="composer-hint">Enter 发送 · Shift + Enter 换行</span><button id="send" type="submit" aria-label="发送消息">↑</button></div>
+      </form>
+      <div class="composer-meta"><p id="mode-description">正在检查对话服务…</p><details id="exercise" hidden><summary>故障演练</summary><label for="scenario">下一条回复</label><select id="scenario"><option value="normal">正常回复</option><option value="disconnect">中途断线后恢复</option><option value="unknown">发送结果暂时未知</option><option value="failure">回复中途失败</option></select><p>仅本地生效，不创建资源或调用 AI。</p></details></div>
+    </div>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

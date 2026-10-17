@@ -1,0 +1,12 @@
+{
+  "name": "sites-google-oidc-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.check.mjs",
+    "build": "node build.mjs"
+  },
+  "dependencies": { "@auth/core": "0.41.3", "jose": "6.2.12" },
+  "devDependencies": { "esbuild": "0.28.1" },
+  "engines": { "node": ">=22.12.0" }
+}
