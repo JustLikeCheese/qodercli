@@ -29,14 +29,14 @@ REM Tell the Go binary to use qodersec-specific naming (log file, etc.)
 set "CODESEC_LOG_NAME=qodersec"
 REM Pinned dependency versions (updated when plugin is published)
 REM Set both QODERSEC_* and CODESEC_* for Go binary compatibility
-set "QODERSEC_CLI_VERSION_GLOBAL=0.9.5"
-set "QODERSEC_CLI_VERSION_CN=0.9.5"
-set "CODESEC_CLI_VERSION_GLOBAL=0.9.5"
-set "CODESEC_CLI_VERSION_CN=0.9.5"
-set "QODERCLI_VERSION_GLOBAL=1.1.41"
-set "QODERCLI_VERSION_CN=1.1.41"
-set "QODERCLI_MANIFEST_URL_GLOBAL=https://download.qoder.com/qodercli/channels/1.1.41/manifest.json"
-set "QODERCLI_MANIFEST_URL_CN=https://static.qoder.com.cn/qoder-cli-cn/channels/1.1.41/manifest.json"
+set "QODERSEC_CLI_VERSION_GLOBAL=0.9.6"
+set "QODERSEC_CLI_VERSION_CN=0.9.6"
+set "CODESEC_CLI_VERSION_GLOBAL=0.9.6"
+set "CODESEC_CLI_VERSION_CN=0.9.6"
+set "QODERCLI_VERSION_GLOBAL=1.1.81"
+set "QODERCLI_VERSION_CN=1.1.81"
+set "QODERCLI_MANIFEST_URL_GLOBAL=https://download.qoder.com/qodercli/channels/1.1.81/manifest.json"
+set "QODERCLI_MANIFEST_URL_CN=https://static.qoder.com.cn/qoder-cli-cn/channels/1.1.81/manifest.json"
 
 REM Hardcoded home — inherited QODERSEC_HOME/CODESEC_HOME are ignored and
 REM overwritten below to prevent arbitrary command execution via env var hijacking.

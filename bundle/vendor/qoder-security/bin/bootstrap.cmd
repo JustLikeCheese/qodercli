@@ -36,27 +36,43 @@ if not exist "%BIN_DIR%" mkdir "%BIN_DIR%" >nul 2>nul
 if not exist "%BIN_DIR%\." echo [bootstrap] ERROR: cannot create %BIN_DIR% >&2
 if not exist "%BIN_DIR%\." exit /b 1
 
+set "ARCHIVE_NAME=codesec-cli-windows-%ARCH%.zip"
 set "DOWNLOAD=%BIN_DIR%\qodersec.download.zip"
+set "MANIFEST=%BIN_DIR%\qodersec.download.manifest.json"
 set "EXTRACT_DIR=%BIN_DIR%\qodersec.download"
 set "EXTRACTED=%EXTRACT_DIR%\codesec-cli.exe"
-set "QODERSEC_DOWNLOAD_URL=%BUCKET_URL%/%VERSION%/codesec-cli-windows-%ARCH%.zip"
+set "QODERSEC_DOWNLOAD_URL=%BUCKET_URL%/%VERSION%/%ARCHIVE_NAME%"
+set "QODERSEC_MANIFEST_URL=%BUCKET_URL%/%VERSION%/manifest.json"
 set "QODERSEC_DOWNLOAD_OUT=%DOWNLOAD%"
+set "QODERSEC_MANIFEST_OUT=%MANIFEST%"
+set "QODERSEC_ARCHIVE_NAME=%ARCHIVE_NAME%"
 set "QODERSEC_EXTRACT_DIR=%EXTRACT_DIR%"
 del /q "%DOWNLOAD%" >nul 2>nul
+del /q "%MANIFEST%" >nul 2>nul
 rmdir /s /q "%EXTRACT_DIR%" >nul 2>nul
 
 echo [bootstrap] Downloading %QODERSEC_DOWNLOAD_URL%
 set "POWERSHELL_EXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 if not exist "%POWERSHELL_EXE%" set "POWERSHELL_EXE=powershell.exe"
-REM Step 1: download. Invoke-WebRequest is ConstrainedLanguage-safe (confirmed in
-REM feedback 4bc07021: the download succeeded there, only Expand-Archive failed).
-REM -TimeoutSec bounds it: the background updater holds the update lock for the
-REM whole run, so a stalled connection would otherwise park it there.
+REM Step 1: download the version manifest and archive. Invoke-WebRequest is
+REM ConstrainedLanguage-safe (confirmed in feedback 4bc07021: the download
+REM succeeded there, only Expand-Archive failed). Timeouts keep the updater lock
+REM from being held forever by a stalled connection.
+"%POWERSHELL_EXE%" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -TimeoutSec 60 -Uri $env:QODERSEC_MANIFEST_URL -OutFile $env:QODERSEC_MANIFEST_OUT"
+if errorlevel 1 goto manifest_download_failed
+if not exist "%MANIFEST%" goto manifest_download_failed
 "%POWERSHELL_EXE%" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -TimeoutSec 900 -Uri $env:QODERSEC_DOWNLOAD_URL -OutFile $env:QODERSEC_DOWNLOAD_OUT"
 if errorlevel 1 goto download_failed
 if not exist "%DOWNLOAD%" goto download_failed
 
-REM Step 2: extract. Prefer System32 tar.exe (works under ConstrainedLanguage);
+REM Step 2: verify the archive against the SHA-256 in the version manifest.
+REM Missing/invalid metadata and mismatches all fail closed before extraction.
+"%POWERSHELL_EXE%" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $m=Get-Content -Raw -LiteralPath $env:QODERSEC_MANIFEST_OUT | ConvertFrom-Json; if ($m.latest -cne $env:VERSION) { throw 'manifest version mismatch' }; $entries=@($m.files | Where-Object { $_.os -ceq 'windows' -and $_.arch -ceq $env:ARCH -and $_.url -clike ('*/' + $env:QODERSEC_ARCHIVE_NAME) }); if ($entries.Count -ne 1) { throw 'manifest must contain exactly one matching platform archive' }; $e=$entries[0]; if (([string]$e.sha256) -notmatch '^[0-9A-Fa-f]{64}$') { throw ('missing or invalid SHA-256 for ' + $env:QODERSEC_ARCHIVE_NAME) }; $actual=(Get-FileHash -Algorithm SHA256 -LiteralPath $env:QODERSEC_DOWNLOAD_OUT).Hash; if ($actual -ne ([string]$e.sha256)) { throw ('SHA-256 mismatch for ' + $env:QODERSEC_ARCHIVE_NAME) }"
+if errorlevel 1 goto checksum_verification_failed
+
+echo [bootstrap] SHA-256 verified
+
+REM Step 3: extract. Prefer System32 tar.exe (works under ConstrainedLanguage);
 REM without tar.exe (old/stripped Windows) fall back to Expand-Archive, which
 REM still works under FullLanguage. Either path failing reports extraction failed.
 mkdir "%EXTRACT_DIR%" >nul 2>nul
@@ -77,12 +93,12 @@ if not exist "%EXTRACTED%" goto extraction_failed
 
 :extract_done
 
-REM Step 3: best-effort Mark-of-the-Web unblock; never fails the install.
+REM Step 4: best-effort Mark-of-the-Web unblock; never fails the install.
 "%POWERSHELL_EXE%" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Unblock-File -LiteralPath (Join-Path $env:QODERSEC_EXTRACT_DIR 'codesec-cli.exe') -ErrorAction SilentlyContinue" >nul 2>nul
 
 echo [bootstrap] Verifying %EXTRACTED%
 "%EXTRACTED%" version
-if errorlevel 1 goto verification_failed
+if errorlevel 1 goto executable_verification_failed
 move /y "%EXTRACTED%" "%BIN_DIR%\qodersec.exe" >nul 2>nul
 if errorlevel 1 goto install_failed
 set "CHANNEL=global"
@@ -95,34 +111,57 @@ set "VERSION_FILE=%BIN_DIR%\qodersec-version.json"
 >> "%VERSION_FILE%" echo }
 if not exist "%VERSION_FILE%" goto metadata_failed
 del /q "%DOWNLOAD%" >nul 2>nul
+del /q "%MANIFEST%" >nul 2>nul
 rmdir /s /q "%EXTRACT_DIR%" >nul 2>nul
 
 echo [bootstrap] Done
 exit /b 0
 
+:manifest_download_failed
+del /q "%DOWNLOAD%" >nul 2>nul
+del /q "%MANIFEST%" >nul 2>nul
+rmdir /s /q "%EXTRACT_DIR%" >nul 2>nul
+echo [bootstrap] ERROR: manifest download failed >&2
+exit /b 1
+
 :download_failed
 del /q "%DOWNLOAD%" >nul 2>nul
+del /q "%MANIFEST%" >nul 2>nul
 rmdir /s /q "%EXTRACT_DIR%" >nul 2>nul
 echo [bootstrap] ERROR: download failed >&2
 exit /b 1
 
+:checksum_verification_failed
+del /q "%DOWNLOAD%" >nul 2>nul
+del /q "%MANIFEST%" >nul 2>nul
+rmdir /s /q "%EXTRACT_DIR%" >nul 2>nul
+echo [bootstrap] ERROR: SHA-256 verification failed >&2
+exit /b 1
+
 :extraction_failed
 del /q "%DOWNLOAD%" >nul 2>nul
+del /q "%MANIFEST%" >nul 2>nul
 rmdir /s /q "%EXTRACT_DIR%" >nul 2>nul
 echo [bootstrap] ERROR: extraction failed >&2
 exit /b 1
 
-:verification_failed
+:executable_verification_failed
+del /q "%DOWNLOAD%" >nul 2>nul
+del /q "%MANIFEST%" >nul 2>nul
 echo [bootstrap] ERROR: downloaded executable failed version check >&2
 echo [bootstrap] Preserved executable for diagnostics: %EXTRACTED% >&2
 exit /b 1
 
 :install_failed
 del /q "%DOWNLOAD%" >nul 2>nul
+del /q "%MANIFEST%" >nul 2>nul
 rmdir /s /q "%EXTRACT_DIR%" >nul 2>nul
 echo [bootstrap] ERROR: cannot replace qodersec.exe; another process may be using it >&2
 exit /b 1
 
 :metadata_failed
+del /q "%DOWNLOAD%" >nul 2>nul
+del /q "%MANIFEST%" >nul 2>nul
+rmdir /s /q "%EXTRACT_DIR%" >nul 2>nul
 echo [bootstrap] ERROR: cannot write %VERSION_FILE% >&2
 exit /b 1

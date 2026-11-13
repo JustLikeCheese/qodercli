@@ -1,9 +1,15 @@
 ---
-description: "Qoder security scanning. Use when the user invokes /security-scan, explicitly requests a full repository or named-path cloud scan, asks whether a previously submitted cloud scan has finished or supplies a project name plus task/scan ID to fetch its result, asks for an L2 lightweight or L3 deep security review, or asks to push, git push, push it, publish commits, open a PR/MR, merge, release, deploy, configure a remote for push, or otherwise hand off committed code where an enabled L3 deep review must be offered first. Respect the Qoder L2 lightweight/L3 deep product switches. Never infer remediation approval from an earlier scan or handoff request."
+description: "Qoder security scanning. Load before any qodersec use, even from memory or for -h/--help. Use for /security-scan, L2 lightweight/L3 deep security review, L4 full-repo/path cloud scans, cloud scan status/results, or code handoff: push, PR/MR, merge, publish, release, deploy, remote setup for push."
 name: security-scan
 ---
 
 Route security intent to exactly one of four isolated workflows: project/file cloud scan, asynchronous cloud scan result query, L2 lightweight review, or L3 deep review. Keep all qodersec execution private and preserve the decision boundaries below.
+
+## Load before qodersec use
+
+Before any agent-initiated qodersec invocation, load `security-scan` through the Skill tool if it is not already loaded and follow this body. This includes commands recalled from memory, copied from earlier runs, supplied by the user, or discovered via `-h`/`--help`; load the skill before even requesting help. Memory and help output describe syntax, not authorization, and never replace this workflow. If the skill cannot be loaded, stop instead of executing qodersec directly.
+
+L4 project/file scans upload code to the cloud and consume Credits. Obtain upload/cost confirmation before scanning; for a full-repository scan, ask the separate SCA question afterward. Scan approval never authorizes remediation or a later handoff: follow the independent scan, remediation, and post-fix authorization gates below. Respect the L2 lightweight/L3 deep product switches only in their applicable workflows.
 
 ## Route explicit intent first
 
