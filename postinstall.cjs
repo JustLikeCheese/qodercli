@@ -27,7 +27,7 @@ __export(windowsRegistryPath_exports, {
   readWindowsRegistryPath: () => readWindowsRegistryPath
 });
 function readWindowsRegistryPath(runReg) {
-  const directory = (0, import_node_fs.mkdtempSync)((0, import_node_path.join)((0, import_node_os.tmpdir)(), registryPathPrefix));
+  const directory = (0, import_node_fs.mkdtempSync)((0, import_node_path.join)((0, import_node_os.tmpdir)(), "qoder-registry-path-"));
   try {
     const file = (0, import_node_path.join)(directory, "environment.reg");
     runReg(["export", "HKCU\\Environment", file, "/y"]);
@@ -84,14 +84,13 @@ function parseRegistryPathExport(bytes) {
   if (!foundEnvironment) throw new Error("Registry export omitted Environment");
   return entry;
 }
-var import_node_fs, import_node_os, import_node_path, registryPathPrefix;
+var import_node_fs, import_node_os, import_node_path;
 var init_windowsRegistryPath = __esm({
   "packages/cli/src/installation/install/windowsRegistryPath.ts"() {
     "use strict";
     import_node_fs = require("node:fs");
     import_node_os = require("node:os");
     import_node_path = require("node:path");
-    registryPathPrefix = "qoder-registry-path-";
   }
 });
 

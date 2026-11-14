@@ -7,16 +7,16 @@ description:
 allowed-tools: Edit, Write
 ---
 
-# Skill Creator for Qwen Code
+# Skill Creator
 
 This skill provides guidance for creating effective skills.
 
 ## About Skills
 
-Skills are modular, self-contained packages that extend Qwen Code's
+Skills are modular, self-contained packages that extend Qoder CLI's
 capabilities by providing specialized knowledge, workflows, and tools. Think of
-them as "onboarding guides" for specific domains or tasks. They transform the
-Qwen Code from a general-purpose agent into a specialized agent equipped with
+them as "onboarding guides" for specific domains or tasks—they transform Qoder
+CLI from a general-purpose agent into a specialized agent equipped with
 procedural knowledge that no model can fully possess.
 
 ### What Skills Provide
@@ -33,12 +33,12 @@ procedural knowledge that no model can fully possess.
 ### Concise is Key
 
 The context window is a public good. Skills share the context window with
-everything else Qwen Code needs: system prompt, conversation history, other
+everything else Qoder CLI needs: system prompt, conversation history, other
 Skills' metadata, and the actual user request.
 
-**Default assumption: Qwen Code is already very smart.** Only add context
-Qwen Code doesn't already have. Challenge each piece of information: "Does
-Qwen Code really need this explanation?" and "Does this paragraph justify its
+**Default assumption: Qoder CLI is already very smart.** Only add context
+Qoder CLI doesn't already have. Challenge each piece of information: "Does
+Qoder CLI really need this explanation?" and "Does this paragraph justify its
 token cost?"
 
 Prefer concise examples over verbose explanations.
@@ -80,7 +80,7 @@ skill-name/
 Every SKILL.md consists of:
 
 - **Frontmatter** (YAML): Contains `name` and `description` fields. These are
-  the only fields that Qwen Code reads to determine when the skill gets used,
+  the only fields that Qoder CLI reads to determine when the skill gets used,
   thus it is very important to be clear and comprehensive in describing what the
   skill is, and when it should be used.
 - **Body** (Markdown): Instructions and guidance for using the skill. Only
@@ -105,9 +105,9 @@ reliability or are repeatedly rewritten.
 ##### References (`references/`)
 
 Documentation and reference material intended to be loaded as needed into
-context to inform Qwen Code's process and thinking.
+context to inform Qoder CLI's process and thinking.
 
-- **When to include**: For documentation that Qwen Code should reference while
+- **When to include**: For documentation that Qoder CLI should reference while
   working
 - **Examples**: `references/finance.md` for financial schemas,
   `references/api_docs.md` for API specifications
@@ -117,7 +117,7 @@ context to inform Qwen Code's process and thinking.
 ##### Assets (`assets/`)
 
 Files not intended to be loaded into context, but rather used within the output
-Qwen Code produces.
+Qoder CLI produces.
 
 - **When to include**: When the skill needs files that will be used in the final
   output
@@ -186,8 +186,8 @@ Analyze each concrete example to identify reusable resources:
 Create the skill directory structure directly. Ask the user for the target
 location:
 
-- **Project-level**: `${QWEN_CONFIG_DIR}/skills/<skill-name>/`
-- **User-level**: `~/${QWEN_USER_CONFIG_DIR}/skills/<skill-name>/`
+- **Project-level**: `${QODER_CONFIG_DIR}/skills/<skill-name>/`
+- **User-level**: `~/${QODER_USER_CONFIG_DIR}/skills/<skill-name>/`
 
 Create the following directory structure:
 
@@ -228,9 +228,8 @@ directories.
 
 ### Step 4: Edit the Skill
 
-When editing the skill, remember it is being created for another
-Qwen Code session to use. Include information that would be beneficial
-and non-obvious.
+When editing the skill, remember it is being created for another instance of
+Qoder CLI to use. Include information that would be beneficial and non-obvious.
 
 #### Start with Reusable Skill Contents
 
