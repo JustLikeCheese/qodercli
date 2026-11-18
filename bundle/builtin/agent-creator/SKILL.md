@@ -7,7 +7,7 @@ description:
 allowed-tools: Edit, Write
 ---
 
-# Creating Custom Agents for Qoder CLI
+# Creating Custom Agents for Qwen Code
 
 This skill guides you through creating custom agents. Agents are
 specialized AI assistants that run in isolated contexts with custom system
@@ -30,18 +30,18 @@ Use agents when you need:
 
 ## Agent Locations
 
-<!-- QODER_CONFIG_DIR and QODER_USER_CONFIG_DIR below are prompt template
+<!-- QWEN_CONFIG_DIR and QWEN_USER_CONFIG_DIR below are prompt template
 placeholders resolved by argumentSubstitution.ts, not shell environment variables. -->
 
 | Location                                  | Scope             | Priority |
 | ----------------------------------------- | ----------------- | -------- |
-| `<project>/${QODER_CONFIG_DIR}/agents/`    | Current project   | Higher   |
-| `~/${QODER_USER_CONFIG_DIR}/agents/`       | All your projects | Lower    |
+| `<project>/${QWEN_CONFIG_DIR}/agents/`    | Current project   | Higher   |
+| `~/${QWEN_USER_CONFIG_DIR}/agents/`       | All your projects | Lower    |
 
-**Project agents** (`${QODER_CONFIG_DIR}/agents/`): Ideal for codebase-specific
+**Project agents** (`${QWEN_CONFIG_DIR}/agents/`): Ideal for codebase-specific
 agents. Check into version control to share with your team.
 
-**User agents** (`~/${QODER_USER_CONFIG_DIR}/agents/`): Personal agents available across
+**User agents** (`~/${QWEN_USER_CONFIG_DIR}/agents/`): Personal agents available across
 all your projects.
 
 ## Agent File Format
@@ -71,7 +71,7 @@ You are a [role]. When invoked:
 ## Writing Effective Descriptions
 
 The description is **critical**. Include "use proactively" to encourage
-automatic delegation - Qoder CLI uses it to decide when to delegate.
+automatic delegation. Qwen Code uses it to decide when to delegate.
 
 ```yaml
 # Bad - Too vague
@@ -87,7 +87,6 @@ description: Expert code review specialist. Proactively reviews code for quality
 | ---------------- | ----------------------------------------------------------------------------------- |
 | `tools`          | Tools the agent can use (string or array)                                           |
 | `disallowedTools`| Tools to explicitly deny (string or array)                                          |
-| `model`          | Model tier: `inherit` (default), `lite`, `efficient`, `auto`, `performance`, `ultimate` |
 | `color`          | Display color: `red`, `blue`, `green`, `yellow`, `purple`, `orange`, `pink`, `cyan` |
 | `maxTurns`       | Maximum conversation turns (positive integer)                                       |
 | `timeoutMins`    | Timeout in minutes (positive integer)                                               |
@@ -123,30 +122,14 @@ tools: Read, WebSearch, WebFetch
 
 If not specified, the agent inherits default tool access.
 
-#### Choosing a Model
-
-Model tiers progress linearly from lightest to most capable. Higher tiers
-are more capable but consume more credits.
-
-- `inherit` — Use the caller's model. Default and safe choice.
-- `lite` — Simple Q&A, lightweight tasks.
-- `efficient` — Daily coding, code completion.
-- `auto` — Complex tasks, multi-step reasoning.
-- `performance` — Hard engineering problems, large codebases.
-- `ultimate` — Maximum capability, when quality matters most.
-
-Prefer `inherit` unless the agent has a clear reason to differ from the
-caller (e.g. a focused security auditor that benefits from a stronger tier,
-or a high-volume helper that should stay on a lighter tier).
-
 ## Agent Creation Workflow
 
 ### Step 1: Decide the Scope
 
 If not sure where to create the agent, ask the user with two options:
 
-- **Project-level** (`${QODER_CONFIG_DIR}/agents/`): For team-shared, codebase-specific agents
-- **User-level** (`~/${QODER_USER_CONFIG_DIR}/agents/`): For personal agents across all projects
+- **Project-level** (`${QWEN_CONFIG_DIR}/agents/`): For team-shared, codebase-specific agents
+- **User-level** (`~/${QWEN_USER_CONFIG_DIR}/agents/`): For personal agents across all projects
 
 ### Step 2: Gather Requirements
 
@@ -161,12 +144,12 @@ Understand what the agent should do:
 
 ```bash
 # For project-level
-mkdir -p ${QODER_CONFIG_DIR}/agents
-touch ${QODER_CONFIG_DIR}/agents/agent-name.md
+mkdir -p ${QWEN_CONFIG_DIR}/agents
+touch ${QWEN_CONFIG_DIR}/agents/agent-name.md
 
 # For user-level
-mkdir -p ~/${QODER_USER_CONFIG_DIR}/agents
-touch ~/${QODER_USER_CONFIG_DIR}/agents/agent-name.md
+mkdir -p ~/${QWEN_USER_CONFIG_DIR}/agents
+touch ~/${QWEN_USER_CONFIG_DIR}/agents/agent-name.md
 ```
 
 ### Step 4: Write Configuration
@@ -191,8 +174,8 @@ Create the markdown file with:
 ## Best Practices
 
 1. **Design focused agents** - Each should excel at one specific task
-2. **Write detailed descriptions** - Be detailed and specific so Qoder CLI knows
-   when to delegate
+2. **Write detailed descriptions** - Be detailed and specific so
+   Qwen Code knows when to delegate
 3. **Limit tool access** - Grant only necessary permissions for security and
    focus
 4. **Keep prompts concise** - Long, rambling prompts dilute focus
@@ -314,7 +297,6 @@ description:
   sensitive data. Proactively audit security-sensitive code.
 tools: Read, Grep, Glob
 color: red
-model: performance
 ---
 
 You are a security expert auditing code for vulnerabilities.

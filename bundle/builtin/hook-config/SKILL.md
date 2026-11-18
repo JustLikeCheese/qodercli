@@ -7,7 +7,7 @@ description:
 allowed-tools: Edit, Write
 ---
 
-# Creating Hooks for Qoder CLI
+# Creating Hooks for Qwen Code
 
 This skill guides you through creating hooks — automated behaviors that
 trigger on specific events like tool execution, session lifecycle, file
@@ -33,9 +33,9 @@ Use hooks when you need:
 
 | Scope       | File                                 | Use Case                         |
 | ----------- | ------------------------------------ | -------------------------------- |
-| **Project** | `${QODER_CONFIG_DIR}/settings.json`         | Team-shared, version controlled  |
-| **Local**   | `${QODER_CONFIG_DIR}/settings.local.json`   | Personal, not committed          |
-| **User**    | `~/${QODER_USER_CONFIG_DIR}/settings.json`       | Global across all projects       |
+| **Project** | `${QWEN_CONFIG_DIR}/settings.json`         | Team-shared, version controlled  |
+| **Local**   | `${QWEN_CONFIG_DIR}/settings.local.json`   | Personal, not committed          |
+| **User**    | `~/${QWEN_USER_CONFIG_DIR}/settings.json`       | Global across all projects       |
 
 **Choose project** for team guardrails and standards.
 **Choose local** for personal preferences and notifications.
@@ -52,7 +52,7 @@ Use hooks when you need:
         "hooks": [
           {
             "type": "command",
-            "command": "${QODER_CONFIG_DIR}/hooks/my-hook.sh",
+            "command": "${QWEN_CONFIG_DIR}/hooks/my-hook.sh",
             "name": "my-hook",
             "timeout": 60
           }
@@ -228,19 +228,19 @@ Note: outputs whose `hookSpecificOutput` lacks `hookEventName` are rejected with
 
 **Placeholders and exec form.**
 
-Placeholders like `${QODER_PROJECT_DIR}`, `${QODER_PLUGIN_ROOT}`, and `${QODER_PLUGIN_DATA}` are exported as environment variables to the hook subprocess.
+Placeholders like `${QWEN_PROJECT_DIR}`, `${QWEN_PLUGIN_ROOT}`, and `${QWEN_PLUGIN_DATA}` are exported as environment variables to the hook subprocess.
 
 - Under `bash` shell form, the CLI does **not** pre-substitute placeholders — bash expands them at runtime. Prefer double-quoted form so paths containing spaces or shell metacharacters (`'`, `$`, backticks) parse as a single token:
-  - Recommended: `"${QODER_PLUGIN_ROOT}"/scripts/hook.sh`
-  - Not recommended (unquoted; subject to field splitting / globbing): `${QODER_PLUGIN_ROOT}/scripts/hook.sh`
-- Under `powershell`, `${QODER_PROJECT_DIR}`, `${QODER_PLUGIN_ROOT}`, and `${QODER_PLUGIN_DATA}` are substituted into the command template before invocation.
+  - Recommended: `"${QWEN_PLUGIN_ROOT}"/scripts/hook.sh`
+  - Not recommended (unquoted; subject to field splitting / globbing): `${QWEN_PLUGIN_ROOT}/scripts/hook.sh`
+- Under `powershell`, `${QWEN_PROJECT_DIR}`, `${QWEN_PLUGIN_ROOT}`, and `${QWEN_PLUGIN_DATA}` are substituted into the command template before invocation.
 - **Exec form** (`args` is set): `command` is an executable path/name and each `args` element is one literal argv entry. The CLI invokes the binary directly (no shell), so no quoting, splitting, or globbing happens. Use it when `command` or args contain complex shell metacharacters and you don't need pipes/redirection/globs.
 
 ```jsonc
 {
   "type": "command",
   "command": "/usr/bin/python3",
-  "args": ["${QODER_PLUGIN_ROOT}/scripts/check.py", "--strict"]
+  "args": ["${QWEN_PLUGIN_ROOT}/scripts/check.py", "--strict"]
 }
 ```
 
@@ -376,9 +376,9 @@ conversation history.
 
 ### Step 3: Choose Scope
 
-- **Project** (`${QODER_CONFIG_DIR}/settings.json`): Team standards, check in
-- **Local** (`${QODER_CONFIG_DIR}/settings.local.json`): Personal, not committed
-- **User** (`~/${QODER_USER_CONFIG_DIR}/settings.json`): Global, all projects
+- **Project** (`${QWEN_CONFIG_DIR}/settings.json`): Team standards, check in
+- **Local** (`${QWEN_CONFIG_DIR}/settings.local.json`): Personal, not committed
+- **User** (`~/${QWEN_USER_CONFIG_DIR}/settings.json`): Global, all projects
 
 ### Step 4: Create the Configuration
 
@@ -391,10 +391,10 @@ If no hooks exist yet, create the full structure.
 ### Step 5: Create Script Files (command type)
 
 For command hooks with non-trivial logic, create scripts in
-`${QODER_CONFIG_DIR}/hooks/`:
+`${QWEN_CONFIG_DIR}/hooks/`:
 
 ```bash
-mkdir -p ${QODER_CONFIG_DIR}/hooks
+mkdir -p ${QWEN_CONFIG_DIR}/hooks
 ```
 
 Script requirements:
@@ -402,13 +402,13 @@ Script requirements:
 - Write JSON to stdout (or nothing for simple success)
 - Exit 0 for success, 2 for blocking deny, other for warning
 - Use stderr for error messages and debug output
-- Make executable: `chmod +x ${QODER_CONFIG_DIR}/hooks/my-hook.sh`
+- Make executable: `chmod +x ${QWEN_CONFIG_DIR}/hooks/my-hook.sh`
 
 Test independently:
 
 ```bash
 echo '{"tool_name":"Edit","tool_input":{"file_path":"test.ts"}}' | \
-  ${QODER_CONFIG_DIR}/hooks/my-hook.sh
+  ${QWEN_CONFIG_DIR}/hooks/my-hook.sh
 ```
 
 ### Step 6: Verify
@@ -452,7 +452,7 @@ Tell the user to verify:
 
 Runs Prettier on TypeScript files after every Edit or Write.
 
-**`${QODER_CONFIG_DIR}/settings.json`:**
+**`${QWEN_CONFIG_DIR}/settings.json`:**
 
 ```jsonc
 {
@@ -461,7 +461,7 @@ Runs Prettier on TypeScript files after every Edit or Write.
       "matcher": "Edit|Write",
       "hooks": [{
         "type": "command",
-        "command": "${QODER_CONFIG_DIR}/hooks/auto-format.sh",
+        "command": "${QWEN_CONFIG_DIR}/hooks/auto-format.sh",
         "if": "Edit(*.{ts,tsx,js,jsx})",
         "name": "auto-format",
         "statusMessage": "Formatting..."
@@ -471,7 +471,7 @@ Runs Prettier on TypeScript files after every Edit or Write.
 }
 ```
 
-**`${QODER_CONFIG_DIR}/hooks/auto-format.sh`:**
+**`${QWEN_CONFIG_DIR}/hooks/auto-format.sh`:**
 
 ```bash
 #!/bin/bash
@@ -487,7 +487,7 @@ exit 0
 
 Blocks edits to lock files and CI configuration.
 
-**`${QODER_CONFIG_DIR}/settings.json`:**
+**`${QWEN_CONFIG_DIR}/settings.json`:**
 
 ```jsonc
 {
@@ -496,7 +496,7 @@ Blocks edits to lock files and CI configuration.
       "matcher": "Edit|Write",
       "hooks": [{
         "type": "command",
-        "command": "${QODER_CONFIG_DIR}/hooks/protected-files.sh",
+        "command": "${QWEN_CONFIG_DIR}/hooks/protected-files.sh",
         "name": "protected-file-guard",
         "statusMessage": "Checking file permissions..."
       }]
@@ -505,7 +505,7 @@ Blocks edits to lock files and CI configuration.
 }
 ```
 
-**`${QODER_CONFIG_DIR}/hooks/protected-files.sh`:**
+**`${QWEN_CONFIG_DIR}/hooks/protected-files.sh`:**
 
 ```bash
 #!/bin/bash
@@ -533,9 +533,9 @@ exit 0
 
 ### Desktop Notification
 
-Sends a macOS notification when Qoder CLI needs attention.
+Sends a macOS notification when Qwen Code needs attention.
 
-**`${QODER_CONFIG_DIR}/settings.local.json`:**
+**`${QWEN_CONFIG_DIR}/settings.local.json`:**
 
 ```jsonc
 {
@@ -543,7 +543,7 @@ Sends a macOS notification when Qoder CLI needs attention.
     "Notification": [{
       "hooks": [{
         "type": "command",
-        "command": "${QODER_CONFIG_DIR}/hooks/notify.sh",
+        "command": "${QWEN_CONFIG_DIR}/hooks/notify.sh",
         "name": "desktop-notify",
         "async": true
       }]
@@ -552,12 +552,12 @@ Sends a macOS notification when Qoder CLI needs attention.
 }
 ```
 
-**`${QODER_CONFIG_DIR}/hooks/notify.sh`:**
+**`${QWEN_CONFIG_DIR}/hooks/notify.sh`:**
 
 ```bash
 #!/bin/bash
 INPUT=$(cat)
-TITLE=$(echo "$INPUT" | jq -r '.title // "Qoder CLI"')
+TITLE=$(echo "$INPUT" | jq -r --arg product 'Qwen Code' '.title // $product')
 MSG=$(echo "$INPUT" | jq -r '.message // "Notification"')
 
 if command -v osascript &>/dev/null; then
@@ -572,7 +572,7 @@ exit 0
 
 Uses an agent to verify TypeScript compiles after edits.
 
-**`${QODER_CONFIG_DIR}/settings.json`:**
+**`${QWEN_CONFIG_DIR}/settings.json`:**
 
 ```jsonc
 {
