@@ -100,15 +100,27 @@ try {
   warnIfRipgrepUnavailable();
 } catch {
 }
-if (process.platform === "win32") {
+if (isGlobalNpmInstall()) {
+  if (process.platform === "win32") {
+    try {
+      ensureNpmBinOnPath();
+    } catch {
+    }
+  }
   try {
-    ensureNpmBinOnPath();
+    configurePathBestEffort();
   } catch {
   }
 }
-try {
-  configurePathBestEffort();
-} catch {
+function isGlobalNpmInstall() {
+  const global = readNpmConfig("global")?.toLowerCase();
+  return global === "true" || global === "1" || readNpmConfig("location") === "global";
+}
+function readNpmConfig(name) {
+  const key = `npm_config_${name}`;
+  return process.env[key] ?? Object.entries(process.env).find(
+    ([candidate]) => candidate.toLowerCase() === key
+  )?.[1];
 }
 function configurePathBestEffort() {
   const fs = require("node:fs");
