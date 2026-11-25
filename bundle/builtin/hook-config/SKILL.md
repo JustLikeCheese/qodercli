@@ -13,6 +13,43 @@ This skill guides you through creating hooks — automated behaviors that
 trigger on specific events like tool execution, session lifecycle, file
 changes, and notifications. Hooks are configured in settings.json files.
 
+## Model switch hooks
+
+`PreModelSwitch` runs before an explicit session model change from a command,
+model picker, SDK, ACP, or remote client. `PostModelSwitch` runs after that
+change is applied. Automatic fallback, startup selection, model application after
+login or account switching, resume, and same-model updates do not trigger these
+events.
+
+The matcher targets the destination model. Both events receive
+`session_id`, `transcript_path`, `cwd`, `hook_event_name`, `from_model`, and
+`to_model`. The model fields carry catalog display names, and matchers compare the
+same destination model value.
+
+Both events are notification-only: `deny`, `ask`, `block`, exit code 2,
+execution failures, and timeouts do not veto the model change. They never open
+a confirmation dialog or send a model-switch confirmation request to a host.
+Pre output, including `hookSpecificOutput.additionalContext` and plain stdout,
+is not injected into model context. Neither event includes a switch-source field.
+SDK and remote clients keep the existing `set_model` request format; configuring
+these hooks does not require additional request parameters.
+
+Execution uses the same sync/async mechanics as `PostToolUse`. By default,
+Pre is awaited before applying the change and Post is awaited after applying
+it. Ordinary hooks can delay completion, but cannot prevent the change.
+Hooks configured with `async: true` run in the background through the existing
+runner. Per-type timeout defaults and explicit `timeout` values are unchanged.
+`asyncRewake` retains the existing consumer-dependent behavior.
+
+Post handlers cannot undo a committed change. Successful plain stdout or
+`hookSpecificOutput.additionalContext` is queued through the existing async-hook
+context mechanism, even for a synchronous Post handler. Completed output is
+consumed at the next context drain before a model turn, not injected into an
+already-started request. Output completed after that drain waits for a later
+turn. Outputs from multiple changes are delivered as they become available.
+Failure to save the default model does not suppress Post when the session
+model has already changed.
+
 ## When to Use Hooks
 
 Use hooks when you need:
@@ -151,6 +188,8 @@ The hook script must `exit 2` (and write its diagnostic to `stderr` /
 | `StopFailure`   | Agent encounters fatal error and must stop (notification-only) |
 | `PreCompact`    | Before context compaction                                     |
 | `PostCompact`   | After context compaction                                      |
+| `PreModelSwitch` | Before an explicit session model change; notification only    |
+| `PostModelSwitch` | After an explicit session model change; notification only    |
 
 `TeammateIdle` input includes `teammate_name` and `team_name`. Exit code 2
 uses stderr as feedback. A JSON output with `decision: "deny"` or
