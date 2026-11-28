@@ -1,6 +1,6 @@
 {
   "name": "@qoder-ai/qodercli",
-  "version": "1.1.99",
+  "version": "1.1.100",
   "description": "Qoder AI CLI - AI-powered coding assistant",
   "author": "Qoder AI",
   "type": "module",
@@ -14,7 +14,8 @@
     "README.md",
     "LICENSE",
     "NOTICE",
-    "THIRD-PARTY-LICENSES"
+    "THIRD-PARTY-LICENSES",
+    "PDF-THIRD-PARTY-NOTICES.txt"
   ],
   "dependencies": {
     "@crosscopy/clipboard": "0.3.6",
@@ -22,12 +23,12 @@
     "sharp": "^0.34.5"
   },
   "optionalDependencies": {
-  "@qoder-ai/qodercli-ripgrep-darwin-arm64": "1.1.99",
-  "@qoder-ai/qodercli-ripgrep-darwin-x64": "1.1.99",
-  "@qoder-ai/qodercli-ripgrep-linux-arm64": "1.1.99",
-  "@qoder-ai/qodercli-ripgrep-linux-x64": "1.1.99",
-  "@qoder-ai/qodercli-ripgrep-win32-arm64": "1.1.99",
-  "@qoder-ai/qodercli-ripgrep-win32-x64": "1.1.99"
+  "@qoder-ai/qodercli-ripgrep-darwin-arm64": "1.1.100",
+  "@qoder-ai/qodercli-ripgrep-darwin-x64": "1.1.100",
+  "@qoder-ai/qodercli-ripgrep-linux-arm64": "1.1.100",
+  "@qoder-ai/qodercli-ripgrep-linux-x64": "1.1.100",
+  "@qoder-ai/qodercli-ripgrep-win32-arm64": "1.1.100",
+  "@qoder-ai/qodercli-ripgrep-win32-x64": "1.1.100"
 },
   "engines": {
     "node": ">=20.0.0"

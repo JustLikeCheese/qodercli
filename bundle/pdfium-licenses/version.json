@@ -1,0 +1,147 @@
+{
+  "release": "8046d",
+  "repository": "https://github.com/paulocoutinhox/pdfium-lib",
+  "archive": "https://github.com/paulocoutinhox/pdfium-lib/releases/download/8046d/wasm.zip",
+  "pdfiumSourceBranch": "chromium/8046",
+  "pdfiumRevision": "f91ca5a72358bb0b00b4da9481b21fe668157614",
+  "revisionEvidence": "Resolved head of the branch named by upstream 8046d modules/config.py; upstream binary release does not publish a revision attestation.",
+  "emscriptenVersion": "6.0.0",
+  "files": {
+    "pdfium.esm.js": "cf4b618b7214dc583e6795fb734f3f95912eac4207a4edddc87f6dfe8c35c2ab",
+    "pdfium.esm.wasm": "beeaf5bbff216d555fecec7cd486072838c4632a2272d31b52ef1fd05008fe7c"
+  },
+  "licenses": [
+    {
+      "name": "pdfium-lib",
+      "url": "https://raw.githubusercontent.com/paulocoutinhox/pdfium-lib/8046d/LICENSE.md",
+      "file": "LICENSE.pdfium-lib.md",
+      "sha256": "f76cf515028a29998219ef69368c12c29ac0507df55475408e590e32f7627a5d"
+    },
+    {
+      "name": "PDFium",
+      "url": "https://pdfium.googlesource.com/pdfium/+/f91ca5a72358bb0b00b4da9481b21fe668157614/LICENSE?format=TEXT",
+      "file": "LICENSE.pdfium",
+      "sha256": "1fe9dea718fbd75cf149adaf4d8a22a4335604d964ddb76d1b45383dec8668c9"
+    },
+    {
+      "name": "agg23/copying",
+      "url": "https://pdfium.googlesource.com/pdfium/+/f91ca5a72358bb0b00b4da9481b21fe668157614/third_party/agg23/copying?format=TEXT",
+      "sha256": "0e16f9c2285583269242e94c6f502de0c9910dfcbbc7b386e236cdf29ecd4333",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "bigint/LICENSE",
+      "url": "https://pdfium.googlesource.com/pdfium/+/f91ca5a72358bb0b00b4da9481b21fe668157614/third_party/bigint/LICENSE?format=TEXT",
+      "sha256": "32759d1397d8f7b9e15ece146e4038b22b90e93b4935b5a840bcef4d2ba5ea55",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "lcms/LICENSE",
+      "url": "https://pdfium.googlesource.com/pdfium/+/f91ca5a72358bb0b00b4da9481b21fe668157614/third_party/lcms/LICENSE?format=TEXT",
+      "sha256": "6dbd60437f8ef91d8de1f08ad75882547fd4931bfcc3566a0735f28db1484d31",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "libopenjpeg/LICENSE",
+      "url": "https://pdfium.googlesource.com/pdfium/+/f91ca5a72358bb0b00b4da9481b21fe668157614/third_party/libopenjpeg/LICENSE?format=TEXT",
+      "sha256": "a6af136f3e15038a666b61f376612a07d9a4e48cb7c01adbf3e33b3f14ab49b6",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "libtiff/LICENSE.md",
+      "url": "https://pdfium.googlesource.com/pdfium/+/f91ca5a72358bb0b00b4da9481b21fe668157614/third_party/libtiff/LICENSE.md?format=TEXT",
+      "sha256": "0780558a8bfba0af1160ec1ff11ade4f41c0d7deafd6ecfc796b492a788e380d",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "NotoSansBengali2/LICENSE",
+      "url": "https://pdfium.googlesource.com/pdfium/+/f91ca5a72358bb0b00b4da9481b21fe668157614/third_party/NotoSansBengali2/LICENSE?format=TEXT",
+      "sha256": "d6639d6624144ef0611b03172e085251c29d4c929b3c11e891e72db6a5b5c2e1",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "NotoSansBengali3/LICENSE",
+      "url": "https://pdfium.googlesource.com/pdfium/+/f91ca5a72358bb0b00b4da9481b21fe668157614/third_party/NotoSansBengali3/LICENSE?format=TEXT",
+      "sha256": "d6639d6624144ef0611b03172e085251c29d4c929b3c11e891e72db6a5b5c2e1",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "NotoSansCJK/LICENSE",
+      "url": "https://pdfium.googlesource.com/pdfium/+/f91ca5a72358bb0b00b4da9481b21fe668157614/third_party/NotoSansCJK/LICENSE?format=TEXT",
+      "sha256": "d6639d6624144ef0611b03172e085251c29d4c929b3c11e891e72db6a5b5c2e1",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "freetype-FTL",
+      "url": "https://chromium.googlesource.com/chromium/src/third_party/freetype2/+/4800589f76dc62fbe523a74a59e0d4850a5dd7df/docs/FTL.TXT?format=TEXT",
+      "sha256": "5a5ee54c5001bbad1cdc1a57cc3dd4c42199b2da09d39c7ee41fab002d02967f",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "freetype-LICENSE",
+      "url": "https://chromium.googlesource.com/chromium/src/third_party/freetype2/+/4800589f76dc62fbe523a74a59e0d4850a5dd7df/LICENSE.TXT?format=TEXT",
+      "sha256": "bd36c8b474855fa294c2ec5c184544478ef3720aad37d65a6296a4f264fd2d3b",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "libjpeg",
+      "url": "https://chromium.googlesource.com/chromium/deps/libjpeg_turbo/+/640f254ad0fa03f6b1f29f89b7dd9366f2f6e533/LICENSE.md?format=TEXT",
+      "sha256": "96f5b328adbb78eeaaec6980d73fd558cb1e4d62560ed615646bc3cf5e532430",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "libjpeg-IJG",
+      "url": "https://chromium.googlesource.com/chromium/deps/libjpeg_turbo/+/640f254ad0fa03f6b1f29f89b7dd9366f2f6e533/README.ijg?format=TEXT",
+      "sha256": "75815e3bf6484201a3c3d17a1bbf10f2e8e3237f84df10a2357ea896db2a81d6",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "libpng",
+      "url": "https://chromium.googlesource.com/chromium/src/third_party/libpng/+/6d5341764ef4e38cbc07d35514a8aa73de50de8a/LICENSE?format=TEXT",
+      "sha256": "bdb0a645ea18c60507d0368379b1ac5474b92255fcc2d115e07486a7672ba526",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "zlib",
+      "url": "https://chromium.googlesource.com/chromium/src/third_party/zlib/+/285e94b8fa95ad3b7d16b80798ec8dce6febb8c8/LICENSE?format=TEXT",
+      "sha256": "e32ff4e00d9d94930537635291da39e7e612703334bf6fde8c7f1686fe8a45a2",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "abseil",
+      "url": "https://chromium.googlesource.com/chromium/src/third_party/abseil-cpp/+/435e7d977fb36fb47854a4c552c0706dad0bd7cf/LICENSE?format=TEXT",
+      "sha256": "c79a7fea0e3cac04cd43f20e7b648e5a0ff8fa5344e644b0ee09ca1162b62747",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "fast-float",
+      "url": "https://chromium.googlesource.com/external/github.com/fastfloat/fast_float/+/34164f547b7df3f5d794ff67e9f885c36819ebfc/LICENSE-MIT?format=TEXT",
+      "sha256": "e562f3f974ced7e69dd1db77b820b36bcf8f30377f1aa105723fba449c53c4e6",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "emscripten",
+      "url": "https://raw.githubusercontent.com/emscripten-core/emscripten/6.0.0/LICENSE",
+      "sha256": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "musl",
+      "url": "https://raw.githubusercontent.com/emscripten-core/emscripten/6.0.0/system/lib/libc/musl/COPYRIGHT",
+      "sha256": "b870108ec5e7790e9f9919064f1b9421d62d5f9b0e6c230c6adf7ea2da62e97b",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "libcxx",
+      "url": "https://raw.githubusercontent.com/emscripten-core/emscripten/6.0.0/system/lib/libcxx/LICENSE.TXT",
+      "sha256": "539dd7aed86e8a4f12cbdd0e6c50c189c7d74847e4fecc64ce2c6ee3a01da38b",
+      "file": "LICENSE.third-party"
+    },
+    {
+      "name": "compiler-rt",
+      "url": "https://raw.githubusercontent.com/emscripten-core/emscripten/6.0.0/system/lib/compiler-rt/LICENSE.TXT",
+      "sha256": "1a8f1058753f1ba890de984e48f0242a3a5c29a6a8f2ed9fd813f36985387e8d",
+      "file": "LICENSE.third-party"
+    }
+  ]
+}

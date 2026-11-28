@@ -1,0 +1,87 @@
+Qwen Code
+Copyright 2026 Qwen Team.
+Licensed under the Apache License, Version 2.0 (the "License");
+see the LICENSE file in the root of this repository.
+
+================================================================================
+About this project
+================================================================================
+Qwen Code is an independently developed project by the Qwen Team. It draws
+inspiration from other command-line AI coding tools such as Google Gemini CLI
+(Copyright 2025 Google LLC, licensed under the Apache License, Version 2.0).
+Files newly added or modified by the Qwen Team carry a "Copyright 2026 Qwen
+Team" line.
+
+================================================================================
+Third-party components
+================================================================================
+This product contains third-party components under other open source
+licenses. This section summarizes selected components and their licenses.
+For the CodeMode JavaScript sandbox (quickjs-wasi and its bundled engine),
+see the full notices in THIRD-PARTY-LICENSES.
+The PDFium and Photon license texts and PDFium dependency notices are provided
+in PDF-THIRD-PARTY-NOTICES.txt in distribution packages. This is not a complete
+inventory of every product dependency.
+
+--------------------------------------------------------------------------------
+Vendored in this repository (component level)
+--------------------------------------------------------------------------------
+packages/core/src/utils/pdfium
+  PDFium WASM from paulocoutinhox/pdfium-lib release 8046d.
+  Upstream glue and WebAssembly are distributed unchanged.
+  PDFium: BSD-3-Clause and Apache-2.0; pdfium-lib: MIT.
+  This software is based in part on the work of the Independent JPEG Group.
+  FreeType portions are distributed under the FreeType License (FTL).
+  Full texts and dependency notices: packages/core/src/utils/pdfium/LICENSE*
+  Release provenance, source revisions and SHA-256: the adjacent version.json.
+
+third_party/get-ripgrep
+  Based on @lvce-editor/ripgrep
+  Copyright (c) 2023 Lvce Editor
+  Licensed under the MIT License
+  Full text: third_party/get-ripgrep/LICENSE
+
+packages/cli/src/ink
+  Vendored fork of @jrichman/ink v6.6.7, ported to TypeScript with
+  modifications by the Qwen Team.
+  Copyright (c) Vadym Demedes <vadimdemedes@hey.com> (github.com/vadimdemedes)
+  Licensed under the MIT License
+  Full text: packages/cli/src/ink/LICENSE
+
+packages/cli/src/ui/components/InkSpinner.tsx
+  Vendored from ink-spinner v5.0.0, ported to TypeScript with
+  modifications by the Qwen Team.
+  Copyright (c) Vadym Demedes <vadimdemedes@hey.com> (github.com/vadimdemedes)
+  Licensed under the MIT License
+  Full text: in the file header
+
+packages/cli/src/ui/components/InkGradient.tsx
+  Vendored from ink-gradient v3.0.0, with modifications by the Qwen Team.
+  Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+  Licensed under the MIT License
+  Full text: in the file header
+
+Portions derived from vybestack/llxprt-code
+  The following files incorporate code from vybestack/llxprt-code (a fork
+  of Google Gemini CLI), Copyright 2025 Vybestack LLC:
+    packages/cli/src/utils/readStdin.ts
+    packages/cli/src/ui/hooks/useKeypress.ts
+    packages/cli/src/ui/contexts/MouseContext.tsx
+    packages/core/src/utils/channel.ts
+    packages/core/src/utils/systemEncoding.test.ts
+  Licensed under the Apache License, Version 2.0
+
+--------------------------------------------------------------------------------
+Notable runtime dependencies
+--------------------------------------------------------------------------------
+sharp
+  Licensed under the Apache License, Version 2.0.
+  Prebuilt native binaries bundle libvips, licensed under LGPL-3.0-or-later.
+
+jszip
+  Dual-licensed under MIT OR GPL-3.0-or-later.
+  This project elects the MIT License.
+
+spdx-exceptions
+  Licensed under the Creative Commons Attribution 3.0 Unported License
+  (CC-BY-3.0).

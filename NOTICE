@@ -19,10 +19,22 @@ This product contains third-party components under other open source
 licenses. This section summarizes selected components and their licenses.
 For the CodeMode JavaScript sandbox (quickjs-wasi and its bundled engine),
 see the full notices in THIRD-PARTY-LICENSES.
+The PDFium and Photon license texts and PDFium dependency notices are provided
+in PDF-THIRD-PARTY-NOTICES.txt in distribution packages. This is not a complete
+inventory of every product dependency.
 
 --------------------------------------------------------------------------------
 Vendored in this repository (component level)
 --------------------------------------------------------------------------------
+packages/core/src/utils/pdfium
+  PDFium WASM from paulocoutinhox/pdfium-lib release 8046d.
+  Upstream glue and WebAssembly are distributed unchanged.
+  PDFium: BSD-3-Clause and Apache-2.0; pdfium-lib: MIT.
+  This software is based in part on the work of the Independent JPEG Group.
+  FreeType portions are distributed under the FreeType License (FTL).
+  Full texts and dependency notices: packages/core/src/utils/pdfium/LICENSE*
+  Release provenance, source revisions and SHA-256: the adjacent version.json.
+
 third_party/get-ripgrep
   Based on @lvce-editor/ripgrep
   Copyright (c) 2023 Lvce Editor
